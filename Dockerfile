@@ -13,11 +13,10 @@ ENV BUN_INSTALL=/root/.bun
 ENV PATH=/root/.bun/bin:${PATH}
 
 # Copy the whole project (see .dockerignore for exclusions) and build the fat jar.
-# `:backend:shadowJar` triggers the frontend build + bundling via processResources.
 # The Ktor plugin names the fat jar `backend-all.jar`; normalize it to app.jar.
 COPY . .
 RUN chmod +x gradlew \
-    && ./gradlew :backend:shadowJar --no-daemon \
+    && ./gradlew :backend:buildFatJar --no-daemon \
     && cp backend/build/libs/backend-all.jar app.jar
 
 # ---- Runtime stage: slim JRE with just the application jar ----

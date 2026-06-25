@@ -1,9 +1,6 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 plugins {
     alias(libs.plugins.kotlin)
     alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.shadow)
 }
 
 allprojects {
@@ -12,34 +9,5 @@ allprojects {
 
     repositories {
         mavenCentral()
-    }
-}
-
-subprojects {
-    // The frontend is a Node/Vite project, not a JVM module; skip the Kotlin/Shadow setup for it.
-    if (name == "frontend") return@subprojects
-
-    apply(plugin = "org.jetbrains.kotlin.jvm")
-    apply(plugin = "com.gradleup.shadow")
-
-    java {
-        toolchain.languageVersion.set(JavaLanguageVersion.of(21))
-    }
-
-    kotlin {
-        jvmToolchain(21)
-        compilerOptions {
-            apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
-        }
-    }
-
-    tasks.named("shadowJar", ShadowJar::class) {
-        mergeServiceFiles()
-        archiveFileName.set("${project.name}.jar")
-    }
-
-    tasks.test {
-        useJUnitPlatform()
     }
 }
