@@ -16,6 +16,9 @@ allprojects {
 }
 
 subprojects {
+    // The frontend is a Node/Vite project, not a JVM module; skip the Kotlin/Shadow setup for it.
+    if (name == "frontend") return@subprojects
+
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "com.gradleup.shadow")
 

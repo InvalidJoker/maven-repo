@@ -9,6 +9,7 @@ ktor:
       - de.joker.DatabasesKt.configureDatabases
       - de.joker.AuthKt.configureAuth
       - de.joker.RoutingKt.configureRouting
+      - de.joker.FrontendKt.configureFrontend
 
 database:
   # Selects the active database backend: "h2" (embedded file) or "postgres".
@@ -25,6 +26,10 @@ database:
     database: "$DATABASE_NAME:maven_repo"
     user: "$DATABASE_USER:postgres"
     password: "$DATABASE_PASSWORD:postgres"
+
+repository:
+  # Filesystem location where artifacts are stored, one subdirectory per repository.
+  storagePath: "$REPOSITORY_PATH:./data/repositories"
 
 auth:
   session:

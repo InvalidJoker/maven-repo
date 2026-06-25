@@ -37,6 +37,14 @@ class UserService(
             .singleOrNull()
     }?.let { (hash, user) -> if (hasher.verify(password, hash)) user else null }
 
+    /** Looks up a user by username, or null if none exists. */
+    suspend fun findByUsername(username: String): UserDto? = db.query {
+        UserTable.selectAll()
+            .where { UserTable.username eq username }
+            .map { UserDto(it[UserTable.id].value, it[UserTable.username], it[UserTable.admin]) }
+            .singleOrNull()
+    }
+
     /** Total number of registered users; used to decide whether to seed an admin. */
     suspend fun count(): Long = db.query { UserTable.selectAll().count() }
 }
