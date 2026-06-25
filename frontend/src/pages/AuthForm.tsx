@@ -35,11 +35,11 @@ export function AuthForm({ title, submitLabel, action, footer }: AuthFormProps) 
       <Card className="w-full max-w-sm p-6">
         <button
           onClick={() => navigate('/')}
-          className="mb-4 text-sm text-neutral-500 hover:text-neutral-300"
+          className="mb-4 text-sm text-slate-500 hover:text-slate-300"
         >
           ← Browse repositories
         </button>
-        <h1 className="mb-1 text-lg font-semibold text-neutral-100">{title}</h1>
+        <h1 className="mb-1 text-lg font-semibold text-slate-100">{title}</h1>
         <form onSubmit={onSubmit} className="mt-5 space-y-3">
           <Input
             placeholder="Username"
@@ -59,9 +59,9 @@ export function AuthForm({ title, submitLabel, action, footer }: AuthFormProps) 
             {busy ? 'Please wait…' : submitLabel}
           </Button>
         </form>
-        <p className="mt-4 text-center text-sm text-neutral-500">
+        <p className="mt-4 text-center text-sm text-slate-500">
           {footer.prompt}{' '}
-          <button onClick={() => navigate(footer.to)} className="text-neutral-200 hover:underline">
+          <button onClick={() => navigate(footer.to)} className="text-slate-200 hover:underline">
             {footer.linkLabel}
           </button>
         </p>

@@ -16,8 +16,9 @@ body,
 
 body {
   margin: 0;
-  background-color: #0a0a0a;
-  color: #d4d4d4;
+  /* Lighter than pure black, with a subtle cool/slate tint. No gradients. */
+  background-color: #0f1320;
+  color: #cbd5e1;
   font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

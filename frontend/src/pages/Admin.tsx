@@ -45,12 +45,12 @@ export function Admin() {
             onChange={(e) => setName(e.target.value)}
             className="max-w-xs"
           />
-          <label className="flex items-center gap-2 text-sm text-neutral-300">
+          <label className="flex items-center gap-2 text-sm text-slate-300">
             <input
               type="checkbox"
               checked={isPrivate}
               onChange={(e) => setPrivate(e.target.checked)}
-              className="accent-neutral-300"
+              className="accent-slate-300"
             />
             Private
           </label>
@@ -65,7 +65,7 @@ export function Admin() {
         {repos.map((repo) => (
           <Card key={repo.id} className="flex items-center justify-between p-4">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-neutral-100">{repo.name}</span>
+              <span className="font-medium text-slate-100">{repo.name}</span>
               <VisibilityBadge isPrivate={repo.private} />
             </div>
             <Button variant="ghost" onClick={() => navigate(`/admin/repos/${encodeURIComponent(repo.name)}`)}>

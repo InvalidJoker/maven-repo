@@ -53,6 +53,15 @@ data class ArtifactInfo(
 @Serializable
 data class VersionInfo(val groupId: String, val artifactId: String, val version: String)
 
+/** A package matched by a repository search. */
+@Serializable
+data class SearchResultDto(
+    val path: String,
+    val groupId: String,
+    val artifactId: String,
+    val latestVersion: String,
+)
+
 /**
  * A directory listing in the repository browser. [artifact] is set when the directory holds
  * versions (install steps target the latest), [version] when it is a concrete version directory.

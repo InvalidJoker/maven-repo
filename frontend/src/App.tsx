@@ -13,7 +13,7 @@ import { Button } from './ui'
 import type { User } from './api'
 
 function Centered({ children }: { children: ReactNode }) {
-  return <div className="flex min-h-full items-center justify-center text-sm text-neutral-500">{children}</div>
+  return <div className="flex min-h-full items-center justify-center text-sm text-slate-500">{children}</div>
 }
 
 function NeedsAuth() {

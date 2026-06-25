@@ -54,4 +54,22 @@ fun Route.repositoryBrowseRoutes(
         }
         call.respond(result)
     }
+
+    get("/api/repositories/{repo}/search") {
+        val repoName = call.parameters["repo"]!!
+        val repo = repositories.findByName(repoName)
+
+        val canRead = repo != null && (!repo.private || run {
+            val session = call.sessions.get<UserSession>() ?: return@run false
+            val principal = MavenPrincipal(session.userId, session.admin, tokenId = null)
+            accessControl.effectivePermission(principal, repo.id) != null
+        })
+        if (repo == null || !canRead) {
+            call.respond(HttpStatusCode.NotFound, mapOf("error" to "Repository not found"))
+            return@get
+        }
+
+        val query = call.request.queryParameters["q"].orEmpty()
+        call.respond(browser.search(repoName, query))
+    }
 }

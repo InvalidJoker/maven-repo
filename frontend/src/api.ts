@@ -66,6 +66,13 @@ export interface BrowseResponse {
   version: VersionInfo | null
 }
 
+export interface SearchResult {
+  path: string
+  groupId: string
+  artifactId: string
+  latestVersion: string
+}
+
 export class ApiError extends Error {
   status: number
 
@@ -120,6 +127,11 @@ export const api = {
       `/api/repositories/${encodeURIComponent(repo)}/tree/${encoded}`,
     )
   },
+  search: (repo: string, query: string) =>
+    request<SearchResult[]>(
+      'GET',
+      `/api/repositories/${encodeURIComponent(repo)}/search?q=${encodeURIComponent(query)}`,
+    ),
 
   // tokens (current user)
   tokens: () => request<Token[]>('GET', '/api/tokens'),

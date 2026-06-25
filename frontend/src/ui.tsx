@@ -4,9 +4,9 @@ import type { Permission } from './api'
 type Variant = 'primary' | 'ghost' | 'danger'
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-neutral-100 text-neutral-900 hover:bg-white border border-transparent',
-  ghost: 'bg-transparent text-neutral-200 hover:bg-neutral-800 border border-neutral-700',
-  danger: 'bg-transparent text-red-400 hover:bg-red-950/40 border border-red-900/60',
+  primary: 'bg-indigo-500 text-white hover:bg-indigo-400 border border-transparent',
+  ghost: 'bg-transparent text-slate-200 hover:bg-slate-800 border border-slate-700',
+  danger: 'bg-transparent text-rose-400 hover:bg-rose-950/40 border border-rose-900/60',
 }
 
 export function Button({
@@ -26,24 +26,28 @@ export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInpu
   return (
     <input
       {...props}
-      className={`w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-neutral-500 focus:outline-none ${className}`}
+      className={`w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 focus:outline-none ${className}`}
     />
   )
 }
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-lg border border-neutral-800 bg-neutral-900/50 ${className}`}>
+    <div className={`rounded-lg border border-slate-800 bg-slate-900/60 ${className}`}>
       {children}
     </div>
   )
 }
 
-export function Badge({ children, tone = 'neutral' }: { children: ReactNode; tone?: 'neutral' | 'green' | 'amber' }) {
-  const tones = {
-    neutral: 'border-neutral-700 text-neutral-400',
-    green: 'border-emerald-800 text-emerald-400',
-    amber: 'border-amber-800 text-amber-400',
+type Tone = 'neutral' | 'green' | 'amber' | 'sky' | 'violet'
+
+export function Badge({ children, tone = 'neutral' }: { children: ReactNode; tone?: Tone }) {
+  const tones: Record<Tone, string> = {
+    neutral: 'border-slate-700 bg-slate-800/40 text-slate-300',
+    green: 'border-emerald-800 bg-emerald-950/40 text-emerald-300',
+    amber: 'border-amber-800 bg-amber-950/40 text-amber-300',
+    sky: 'border-sky-800 bg-sky-950/40 text-sky-300',
+    violet: 'border-violet-800 bg-violet-950/40 text-violet-300',
   }
   return (
     <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium ${tones[tone]}`}>
@@ -53,11 +57,11 @@ export function Badge({ children, tone = 'neutral' }: { children: ReactNode; ton
 }
 
 export function PermissionBadge({ permission }: { permission: Permission }) {
-  return <Badge tone={permission === 'WRITE' ? 'amber' : 'neutral'}>{permission.toLowerCase()}</Badge>
+  return <Badge tone={permission === 'WRITE' ? 'amber' : 'sky'}>{permission.toLowerCase()}</Badge>
 }
 
 export function VisibilityBadge({ isPrivate }: { isPrivate: boolean }) {
-  return <Badge tone={isPrivate ? 'neutral' : 'green'}>{isPrivate ? 'private' : 'public'}</Badge>
+  return <Badge tone={isPrivate ? 'violet' : 'green'}>{isPrivate ? 'private' : 'public'}</Badge>
 }
 
 export function ErrorText({ children }: { children: ReactNode }) {
@@ -68,8 +72,8 @@ export function ErrorText({ children }: { children: ReactNode }) {
 export function PageHeading({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-6">
-      <h1 className="text-xl font-semibold text-neutral-100">{title}</h1>
-      {subtitle && <p className="mt-1 text-sm text-neutral-500">{subtitle}</p>}
+      <h1 className="text-xl font-semibold text-slate-100">{title}</h1>
+      {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
     </div>
   )
 }

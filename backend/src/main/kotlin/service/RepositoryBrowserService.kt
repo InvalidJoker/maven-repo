@@ -3,6 +3,7 @@ package de.joker.service
 import de.joker.model.ArtifactInfo
 import de.joker.model.BrowseEntry
 import de.joker.model.BrowseResponse
+import de.joker.model.SearchResultDto
 import de.joker.model.VersionInfo
 import java.io.File
 
@@ -49,6 +50,45 @@ class RepositoryBrowserService(private val storage: RepositoryStorageService) {
         return BrowseResponse(repository, path, entries, artifact, version)
     }
 
+    /**
+     * Walks the repository tree for artifact directories (those holding version subdirectories)
+     * whose `groupId:artifactId` coordinate contains [query], case-insensitively.
+     */
+    fun search(repository: String, query: String): List<SearchResultDto> {
+        val needle = query.trim().lowercase()
+        if (needle.isEmpty()) return emptyList()
+        val root = storage.fileFor(repository, "")?.takeIf { it.isDirectory } ?: return emptyList()
+
+        val results = ArrayList<SearchResultDto>()
+
+        fun walk(dir: File, segments: List<String>) {
+            if (results.size >= MAX_SEARCH_RESULTS) return
+            val children = dir.listFiles() ?: return
+            val versionDirs = children.filter { it.isDirectory && isVersion(it.name) }.map { it.name }
+
+            if (versionDirs.isNotEmpty() && segments.size >= 2) {
+                val groupId = segments.dropLast(1).joinToString(".")
+                val artifactId = segments.last()
+                if ("$groupId:$artifactId".lowercase().contains(needle)) {
+                    results += SearchResultDto(
+                        path = segments.joinToString("/"),
+                        groupId = groupId,
+                        artifactId = artifactId,
+                        latestVersion = latestVersion(versionDirs),
+                    )
+                }
+            }
+
+            // Recurse only into non-version subdirectories (group path components).
+            for (child in children) {
+                if (child.isDirectory && !isVersion(child.name)) walk(child, segments + child.name)
+            }
+        }
+
+        walk(root, emptyList())
+        return results
+    }
+
     /** Highest version, preferring releases over SNAPSHOTs. */
     private fun latestVersion(versions: List<String>): String {
         val releases = versions.filterNot { it.contains("SNAPSHOT", ignoreCase = true) }
@@ -62,6 +102,8 @@ class RepositoryBrowserService(private val storage: RepositoryStorageService) {
     private fun isVersion(name: String): Boolean = name.isNotEmpty() && name[0].isDigit()
 
     companion object {
+        private const val MAX_SEARCH_RESULTS = 50
+
         /** Compares dotted/dashed versions numerically segment-by-segment. */
         val VERSION_COMPARATOR: Comparator<String> = Comparator { a, b ->
             val ta = a.split('.', '-')
