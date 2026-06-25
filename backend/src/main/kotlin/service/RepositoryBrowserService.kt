@@ -5,27 +5,26 @@ import de.joker.model.BrowseEntry
 import de.joker.model.BrowseResponse
 import de.joker.model.SearchResultDto
 import de.joker.model.VersionInfo
-import java.io.File
 
 /**
  * Turns a repository directory into a [BrowseResponse]: a sorted listing plus inferred Maven
  * coordinates so the UI can show install instructions. Detection follows the standard layout
- * `group/parts/artifactId/version/files`.
+ * `group/parts/artifactId/version/files`. Works over any [StorageBackend].
  */
-class RepositoryBrowserService(private val storage: RepositoryStorageService) {
+class RepositoryBrowserService(private val storage: StorageBackend) {
 
-    fun browse(repository: String, path: String): BrowseResponse? {
-        val files = storage.listDirectory(repository, path) ?: return null
+    suspend fun browse(repository: String, path: String): BrowseResponse? {
+        val listing = storage.list(repository, path) ?: return null
         val segments = path.split('/').filter { it.isNotEmpty() }
 
-        val entries = files
+        val entries = listing
             .sortedWith(
-                compareByDescending<File> { it.isDirectory }
+                compareByDescending<StorageEntry> { it.directory }
                     .thenComparator { a, b -> compareEntryNames(a.name, b.name) },
             )
-            .map { BrowseEntry(it.name, it.isDirectory, if (it.isFile) it.length() else null) }
+            .map { BrowseEntry(it.name, it.directory, it.size) }
 
-        val versionDirs = files.filter { it.isDirectory && isVersion(it.name) }.map { it.name }
+        val versionDirs = listing.filter { it.directory && isVersion(it.name) }.map { it.name }
 
         var artifact: ArtifactInfo? = null
         var version: VersionInfo? = null
@@ -38,7 +37,7 @@ class RepositoryBrowserService(private val storage: RepositoryStorageService) {
                 versions = versionDirs.sortedWith(VERSION_COMPARATOR.reversed()),
                 latestVersion = latestVersion(versionDirs),
             )
-        } else if (segments.size >= 3 && isVersion(segments.last()) && files.any { it.isFile }) {
+        } else if (segments.size >= 3 && isVersion(segments.last()) && listing.any { !it.directory }) {
             // e.g. com/example/mylib/1.0.0 -> version=1.0.0, artifactId=mylib
             version = VersionInfo(
                 groupId = segments.dropLast(2).joinToString("."),
@@ -54,17 +53,16 @@ class RepositoryBrowserService(private val storage: RepositoryStorageService) {
      * Walks the repository tree for artifact directories (those holding version subdirectories)
      * whose `groupId:artifactId` coordinate contains [query], case-insensitively.
      */
-    fun search(repository: String, query: String): List<SearchResultDto> {
+    suspend fun search(repository: String, query: String): List<SearchResultDto> {
         val needle = query.trim().lowercase()
         if (needle.isEmpty()) return emptyList()
-        val root = storage.fileFor(repository, "")?.takeIf { it.isDirectory } ?: return emptyList()
 
         val results = ArrayList<SearchResultDto>()
 
-        fun walk(dir: File, segments: List<String>) {
+        suspend fun walk(path: String, segments: List<String>) {
             if (results.size >= MAX_SEARCH_RESULTS) return
-            val children = dir.listFiles() ?: return
-            val versionDirs = children.filter { it.isDirectory && isVersion(it.name) }.map { it.name }
+            val listing = storage.list(repository, path) ?: return
+            val versionDirs = listing.filter { it.directory && isVersion(it.name) }.map { it.name }
 
             if (versionDirs.isNotEmpty() && segments.size >= 2) {
                 val groupId = segments.dropLast(1).joinToString(".")
@@ -80,12 +78,14 @@ class RepositoryBrowserService(private val storage: RepositoryStorageService) {
             }
 
             // Recurse only into non-version subdirectories (group path components).
-            for (child in children) {
-                if (child.isDirectory && !isVersion(child.name)) walk(child, segments + child.name)
+            for (entry in listing) {
+                if (entry.directory && !isVersion(entry.name)) {
+                    walk(if (path.isEmpty()) entry.name else "$path/${entry.name}", segments + entry.name)
+                }
             }
         }
 
-        walk(root, emptyList())
+        walk("", emptyList())
         return results
     }
 

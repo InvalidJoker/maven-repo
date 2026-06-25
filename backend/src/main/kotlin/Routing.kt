@@ -9,7 +9,7 @@ import de.joker.service.AccessControlService
 import de.joker.service.AccessTokenService
 import de.joker.service.RepositoryBrowserService
 import de.joker.service.RepositoryService
-import de.joker.service.RepositoryStorageService
+import de.joker.service.StorageBackend
 import de.joker.service.UserService
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -22,7 +22,7 @@ fun Application.configureRouting() {
     val repositoryService by inject<RepositoryService>()
     val accessTokenService by inject<AccessTokenService>()
     val accessControlService by inject<AccessControlService>()
-    val storageService by inject<RepositoryStorageService>()
+    val storageService by inject<StorageBackend>()
     val browserService by inject<RepositoryBrowserService>()
 
     routing {

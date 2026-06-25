@@ -27,9 +27,26 @@ database:
     user: "$DATABASE_USER:postgres"
     password: "$DATABASE_PASSWORD:postgres"
 
-repository:
-  # Filesystem location where artifacts are stored, one subdirectory per repository.
-  storagePath: "$REPOSITORY_PATH:./data/repositories"
+storage:
+  # Selects the active storage backend: "local" (local file system) or "s3".
+  type: "$STORAGE_TYPE:local"
+
+  # Used when type = local. Path is relative to the working directory.
+  local:
+    # Filesystem location where artifacts are stored, one subdirectory per repository.
+    path: "$STORAGE_PATH:./data/repositories"
+
+  s3:
+    # S3 bucket name where artifacts are stored, one prefix per repository.
+    bucket: "$S3_BUCKET:my-maven-repo"
+    # Region where the bucket is located.
+    region: "$S3_REGION:us-east-1"
+    # Access key ID / secret access key for the bucket.
+    accessKeyId: "$S3_ACCESS_KEY_ID:your-access-key-id"
+    secretAccessKey: "$S3_SECRET_ACCESS_KEY:your-secret-access-key"
+    # Custom S3 endpoint for S3-compatible stores (MinIO, R2, Backblaze, ...).
+    # Leave empty to use AWS S3 for the configured region.
+    endpoint: "$S3_ENDPOINT:"
 
 auth:
   session:

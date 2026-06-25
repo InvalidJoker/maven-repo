@@ -7,7 +7,7 @@ import de.joker.model.RepositoryDto
 import de.joker.service.AccessControlService
 import de.joker.service.AccessTokenService
 import de.joker.service.RepositoryService
-import de.joker.service.RepositoryStorageService
+import de.joker.service.StorageBackend
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -20,23 +20,27 @@ fun Route.mavenRoutes(
     repositories: RepositoryService,
     tokens: AccessTokenService,
     accessControl: AccessControlService,
-    storage: RepositoryStorageService,
+    storage: StorageBackend,
 ) {
     route("/maven/{repo}") {
         get("/{path...}") {
             val repo = call.authorize(Permission.READ, repositories, tokens, accessControl) ?: return@get
-            val file = storage.fileFor(repo.name, call.artifactPath())
-            if (file == null || !file.isFile) {
+            val path = call.artifactPath()
+            val obj = storage.read(repo.name, path)
+            if (obj == null) {
                 call.respond(HttpStatusCode.NotFound, mapOf("error" to "Artifact not found"))
                 return@get
             }
-            call.respondFile(file)
+            val contentType = ContentType.defaultForFilePath(path)
+            call.respondOutputStream(contentType, HttpStatusCode.OK) {
+                obj.use { it.stream.copyTo(this) }
+            }
         }
 
         head("/{path...}") {
             val repo = call.authorize(Permission.READ, repositories, tokens, accessControl) ?: return@head
-            val file = storage.fileFor(repo.name, call.artifactPath())
-            call.respond(if (file != null && file.isFile) HttpStatusCode.OK else HttpStatusCode.NotFound)
+            val exists = storage.exists(repo.name, call.artifactPath())
+            call.respond(if (exists) HttpStatusCode.OK else HttpStatusCode.NotFound)
         }
 
         put("/{path...}") {

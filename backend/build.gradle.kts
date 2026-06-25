@@ -28,6 +28,8 @@ dependencies {
     implementation(libs.koin.loggerSlf4j)
     implementation(libs.logback.classic)
     implementation(libs.r2dbc.postgresql)
+    implementation(libs.aws.sdk.s3)
+    implementation(libs.aws.sdk.url.connection.client)
 
     //testImplementation(kotlin("test"))
     //testImplementation(ktorLibs.server.testHost)
@@ -47,10 +49,6 @@ java {
 
 kotlin {
     jvmToolchain(21)
-    compilerOptions {
-        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
-    }
 }
 
 tasks.test {
