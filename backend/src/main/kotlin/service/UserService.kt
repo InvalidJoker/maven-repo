@@ -17,19 +17,23 @@ class UserService(
 ) {
 
     /** Creates a user with a bcrypt-hashed password. */
-    suspend fun createUser(username: String, password: String): UserDto = db.query {
+    suspend fun createUser(username: String, password: String, admin: Boolean = false): UserDto = db.query {
         val row = UserTable.insert {
             it[UserTable.username] = username
             it[passwordHash] = hasher.hash(password)
+            it[UserTable.admin] = admin
         }
-        UserDto(row[UserTable.id].value, username)
+        UserDto(row[UserTable.id].value, username, admin)
     }
 
     /** Returns the user when the password matches, otherwise null. */
     suspend fun authenticate(username: String, password: String): UserDto? = db.query {
         UserTable.selectAll()
             .where { UserTable.username eq username }
-            .map { it[UserTable.passwordHash] to UserDto(it[UserTable.id].value, it[UserTable.username]) }
+            .map {
+                it[UserTable.passwordHash] to
+                    UserDto(it[UserTable.id].value, it[UserTable.username], it[UserTable.admin])
+            }
             .singleOrNull()
     }?.let { (hash, user) -> if (hasher.verify(password, hash)) user else null }
 

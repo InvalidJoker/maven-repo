@@ -21,7 +21,7 @@ fun Route.authRoutes(userService: UserService) {
             if (user == null) {
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid credentials"))
             } else {
-                call.sessions.set(UserSession(user.id, user.username))
+                call.sessions.set(UserSession(user.id, user.username, user.admin))
                 call.respond(HttpStatusCode.OK, user)
             }
         }
@@ -34,7 +34,7 @@ fun Route.authRoutes(userService: UserService) {
         authenticate(AUTH_SESSION) {
             get("/me") {
                 val session = call.principal<UserSession>()!!
-                call.respond(UserDto(session.userId, session.username))
+                call.respond(UserDto(session.userId, session.username, session.admin))
             }
         }
     }

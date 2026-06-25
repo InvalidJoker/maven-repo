@@ -10,8 +10,11 @@ import io.ktor.server.response.*
 import io.ktor.server.sessions.*
 import org.koin.ktor.ext.inject
 
-/** Name of the session-based authentication provider used to guard private routes. */
+/** Session auth provider guarding routes that require any logged-in user. */
 const val AUTH_SESSION = "auth-session"
+
+/** Session auth provider guarding routes that require an administrator. */
+const val AUTH_ADMIN = "auth-admin"
 
 /**
  * Installs cookie-backed sessions and session authentication, and seeds the initial
@@ -39,10 +42,17 @@ suspend fun Application.configureAuth() {
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Authentication required"))
             }
         }
+
+        session<UserSession>(AUTH_ADMIN) {
+            validate { session -> session.takeIf { it.admin } }
+            challenge {
+                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Administrator access required"))
+            }
+        }
     }
 
     if (userService.count() == 0L) {
-        userService.createUser(authConfig.adminUsername, authConfig.adminPassword)
+        userService.createUser(authConfig.adminUsername, authConfig.adminPassword, admin = true)
         log.info("Seeded initial admin user '${authConfig.adminUsername}'")
     }
 }

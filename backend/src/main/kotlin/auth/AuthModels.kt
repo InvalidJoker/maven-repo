@@ -8,8 +8,8 @@ data class LoginRequest(val username: String, val password: String)
 
 /** Public-facing user representation (never includes the password hash). */
 @Serializable
-data class UserDto(val id: Int, val username: String)
+data class UserDto(val id: Int, val username: String, val admin: Boolean)
 
 /** Data persisted in the (signed) session cookie. */
 @Serializable
-data class UserSession(val userId: Int, val username: String)
+data class UserSession(val userId: Int, val username: String, val admin: Boolean)
