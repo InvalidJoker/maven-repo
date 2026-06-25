@@ -1,5 +1,5 @@
 package de.joker
 
 fun main(args: Array<String>) {
-    io.ktor.server.netty.EngineMain.main(args)
+    io.ktor.server.cio.EngineMain.main(args)
 }

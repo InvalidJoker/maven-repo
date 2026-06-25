@@ -1,15 +1,18 @@
 - rename to artifact repository (not maven only)
-    - suppoort docker images
+    - support docker images
     - support mirroring maven central f.e.
 
 - admin portal with setup
  - set repo name
  - set favicon
- - setup s3
 
  - manage users
  - oauth
- - whjen adding user to repo suggest them and dont trust input
+ - when adding user to repo suggest them all users and migrate to multiselect and dont trust arbitrary input
 
 - password change
 - token reroll
+- s3 support as storage backend (like we do with dbs)
+ - add qutoa support for storage backend
+
+- add upload limits

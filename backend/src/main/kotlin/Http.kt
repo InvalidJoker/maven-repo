@@ -10,8 +10,8 @@ fun Application.configureHttp() {
         allowMethod(HttpMethod.Put)
         allowMethod(HttpMethod.Delete)
         allowMethod(HttpMethod.Patch)
+        allowMethod(HttpMethod.Get)
         allowHeader(HttpHeaders.Authorization)
-        allowHeader("MyCustomHeader")
-        anyHost() // TODO: Don't do this in production if possible. Try to limit it.
+        anyHost()
     }
 }

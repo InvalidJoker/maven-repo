@@ -15,7 +15,6 @@ import io.ktor.server.config.*
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
-/** Root Koin module wiring together application-wide singletons. */
 fun appModule(config: ApplicationConfig) = module {
     single { DatabaseConfig.from(config) }
     single { AuthConfig.from(config) }

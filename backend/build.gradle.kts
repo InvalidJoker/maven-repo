@@ -6,7 +6,7 @@ plugins {
 }
 
 application {
-    mainClass = "io.ktor.server.netty.EngineMain"
+    mainClass = "io.ktor.server.cio.EngineMain"
 }
 
 dependencies {
@@ -17,7 +17,7 @@ dependencies {
     implementation(ktorLibs.server.contentNegotiation)
     implementation(ktorLibs.server.core)
     implementation(ktorLibs.server.cors)
-    implementation(ktorLibs.server.netty)
+    implementation(ktorLibs.server.cio)
     implementation(ktorLibs.server.sessions)
     implementation(libs.bcrypt)
     implementation(libs.exposed.core)
