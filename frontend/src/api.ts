@@ -39,6 +39,33 @@ export interface CreatedToken {
   info: Token
 }
 
+export interface BrowseEntry {
+  name: string
+  directory: boolean
+  size: number | null
+}
+
+export interface ArtifactInfo {
+  groupId: string
+  artifactId: string
+  versions: string[]
+  latestVersion: string
+}
+
+export interface VersionInfo {
+  groupId: string
+  artifactId: string
+  version: string
+}
+
+export interface BrowseResponse {
+  repository: string
+  path: string
+  entries: BrowseEntry[]
+  artifact: ArtifactInfo | null
+  version: VersionInfo | null
+}
+
 export class ApiError extends Error {
   status: number
 
@@ -82,6 +109,17 @@ export const api = {
 
   // repositories visible to the caller (public ones for anonymous visitors)
   visibleRepositories: () => request<UserRepository[]>('GET', '/api/repositories/visible'),
+  browse: (repo: string, path: string) => {
+    const encoded = path
+      .split('/')
+      .filter((segment) => segment.length > 0)
+      .map(encodeURIComponent)
+      .join('/')
+    return request<BrowseResponse>(
+      'GET',
+      `/api/repositories/${encodeURIComponent(repo)}/tree/${encoded}`,
+    )
+  },
 
   // tokens (current user)
   tokens: () => request<Token[]>('GET', '/api/tokens'),

@@ -28,6 +28,13 @@ class RepositoryStorageService(rootPath: String) {
         return target
     }
 
+    /** Lists the contents of a directory, or null if the path is invalid or not a directory. */
+    fun listDirectory(repository: String, path: String): List<File>? {
+        val dir = fileFor(repository, path) ?: return null
+        if (!dir.isDirectory) return null
+        return dir.listFiles()?.toList() ?: emptyList()
+    }
+
     /** Writes an uploaded artifact; returns false if the path is invalid. */
     suspend fun write(repository: String, path: String, input: InputStream): Boolean = withContext(Dispatchers.IO) {
         val file = fileFor(repository, path) ?: return@withContext false

@@ -5,6 +5,7 @@ import { Layout } from './components/Layout'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
+import { Browser } from './pages/Browser'
 import { Tokens } from './pages/Tokens'
 import { Admin } from './pages/Admin'
 import { RepoPermissions } from './pages/RepoPermissions'
@@ -27,6 +28,10 @@ function NeedsAuth() {
 }
 
 function resolve(parts: string[], user: User | null): ReactNode {
+  if (parts[0] === 'repo' && parts[1]) {
+    return <Browser repo={parts[1]} path={parts.slice(2).join('/')} />
+  }
+
   if (parts[0] === 'tokens') {
     return user ? <Tokens /> : <NeedsAuth />
   }

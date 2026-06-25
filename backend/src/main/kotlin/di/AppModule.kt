@@ -7,6 +7,7 @@ import de.joker.config.DatabaseConfig
 import de.joker.database.DatabaseService
 import de.joker.service.AccessControlService
 import de.joker.service.AccessTokenService
+import de.joker.service.RepositoryBrowserService
 import de.joker.service.RepositoryService
 import de.joker.service.RepositoryStorageService
 import de.joker.service.UserService
@@ -29,4 +30,5 @@ fun appModule(config: ApplicationConfig) = module {
             config.propertyOrNull("repository.storagePath")?.getString() ?: "./data/repositories",
         )
     }
+    single { RepositoryBrowserService(get()) }
 }

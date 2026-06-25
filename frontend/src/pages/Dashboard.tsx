@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react'
 import { api, type UserRepository } from '../api'
+import { useAuth } from '../auth'
+import { navigate } from '../router'
 import { Card, PageHeading, PermissionBadge, VisibilityBadge } from '../ui'
+import { InstallSnippet } from '../components/InstallSnippet'
 
 function repoUrl(name: string): string {
   return `${window.location.origin}/maven/${name}`
 }
 
 export function Dashboard() {
+  const { user } = useAuth()
   const [repos, setRepos] = useState<UserRepository[] | null>(null)
   const [error, setError] = useState('')
 
@@ -29,31 +33,33 @@ export function Dashboard() {
 
       <div className="space-y-2">
         {repos?.map((repo) => (
-          <Card key={repo.name} className="flex items-center justify-between p-4">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-neutral-100">{repo.name}</span>
-                <VisibilityBadge isPrivate={repo.private} />
-                <PermissionBadge permission={repo.permission} />
+          <button
+            key={repo.name}
+            onClick={() => navigate(`/repo/${encodeURIComponent(repo.name)}`)}
+            className="block w-full text-left"
+          >
+            <Card className="flex items-center justify-between p-4 transition-colors hover:border-neutral-700 hover:bg-neutral-900">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-neutral-100">{repo.name}</span>
+                  <VisibilityBadge isPrivate={repo.private} />
+                  <PermissionBadge permission={repo.permission} />
+                </div>
+                <code className="mt-1 block truncate text-xs text-neutral-500">{repoUrl(repo.name)}</code>
               </div>
-              <code className="mt-1 block truncate text-xs text-neutral-500">{repoUrl(repo.name)}</code>
-            </div>
-          </Card>
+              <span className="ml-3 shrink-0 text-neutral-600">→</span>
+            </Card>
+          </button>
         ))}
       </div>
 
       <Card className="mt-8 p-5">
-        <h2 className="mb-2 text-sm font-semibold text-neutral-200">Using a repository in Gradle</h2>
-        <pre className="overflow-x-auto rounded-md border border-neutral-800 bg-neutral-950 p-4 text-xs leading-relaxed text-neutral-300">
-{`maven {
-    url = uri("${window.location.origin}/maven/<repository>")
-    credentials {
-        username = "<your-username>"
-        password = "<access-token>"
-    }
-}`}
-        </pre>
-        <p className="mt-2 text-xs text-neutral-500">
+        <h2 className="mb-3 text-sm font-semibold text-neutral-200">Using a repository in your build</h2>
+        <InstallSnippet
+          repoUrl={`${window.location.origin}/maven/<repository>`}
+          username={user?.username}
+        />
+        <p className="mt-3 text-xs text-neutral-500">
           Public repositories can be read without credentials. Create an access token under{' '}
           <span className="text-neutral-300">Tokens</span> to publish or read private repositories.
         </p>
