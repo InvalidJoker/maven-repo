@@ -39,9 +39,4 @@ subprojects {
     tasks.test {
         useJUnitPlatform()
     }
-
-    tasks.processResources {
-        expand("version" to project.version,
-            "name" to project.name)
-    }
 }

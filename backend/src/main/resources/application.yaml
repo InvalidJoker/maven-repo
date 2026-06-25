@@ -5,7 +5,22 @@ ktor:
     modules:
       - de.joker.HttpKt.configureHttp
       - de.joker.SerializationKt.configureSerialization
-      - de.joker.PostgresKt.configurePostgres
       - de.joker.KoinKt.configureKoin
-      - de.joker.ExposedKt.configureExposed
+      - de.joker.DatabasesKt.configureDatabases
       - de.joker.RoutingKt.configureRouting
+
+database:
+  # Selects the active database backend: "h2" (embedded file) or "postgres".
+  type: "$DATABASE_TYPE:h2"
+
+  # Used when type = h2. Path is relative to the working directory (".mv.db" is appended).
+  h2:
+    file: "$DATABASE_H2_FILE:./data/maven-repo"
+
+  # Used when type = postgres.
+  postgres:
+    host: "$DATABASE_HOST:localhost"
+    port: "$DATABASE_PORT:5432"
+    database: "$DATABASE_NAME:maven_repo"
+    user: "$DATABASE_USER:postgres"
+    password: "$DATABASE_PASSWORD:postgres"
