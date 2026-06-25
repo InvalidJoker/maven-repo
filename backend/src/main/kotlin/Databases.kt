@@ -11,10 +11,6 @@ import de.joker.database.UserTable
 import io.ktor.server.application.*
 import org.koin.ktor.ext.inject
 
-/**
- * Connects to the configured database, failing fast on misconfiguration, and creates any
- * missing tables. This is the single place where Exposed tables are registered for creation.
- */
 suspend fun Application.configureDatabases() {
     val config by inject<DatabaseConfig>()
     val databaseService by inject<DatabaseService>()

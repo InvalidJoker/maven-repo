@@ -13,7 +13,6 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-/** Lets a logged-in user manage their own access tokens. */
 fun Route.tokenRoutes(tokens: AccessTokenService, repositories: RepositoryService) {
     authenticate(AUTH_SESSION) {
         route("/api/tokens") {

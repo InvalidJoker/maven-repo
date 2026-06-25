@@ -12,7 +12,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 
-/** Mounts `/auth` login, logout and current-user endpoints. */
 fun Route.authRoutes(userService: UserService) {
     route("/auth") {
         post("/register") {

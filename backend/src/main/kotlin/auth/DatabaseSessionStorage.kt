@@ -12,16 +12,10 @@ import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.upsert
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Ktor [SessionStorage] that persists sessions in the database while serving reads from an
- * in-memory cache. The cache is hydrated from the database on startup via [loadAll], so
- * sessions survive restarts yet every read avoids a round-trip to the database.
- */
 class DatabaseSessionStorage(private val db: DatabaseService) : SessionStorage {
 
     private val cache = ConcurrentHashMap<String, String>()
 
-    /** Loads all persisted sessions into the in-memory cache. Call once on startup. */
     suspend fun loadAll() {
         val rows = db.query {
             SessionTable.selectAll()

@@ -16,12 +16,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 
-/**
- * Serves a Maven repository under `/maven/<repo>/<path>`.
- *
- * Public repositories allow anonymous reads; everything else requires either a logged-in session
- * or Basic-auth access-token credentials (Gradle's standard `username`/`password`).
- */
 fun Route.mavenRoutes(
     repositories: RepositoryService,
     tokens: AccessTokenService,

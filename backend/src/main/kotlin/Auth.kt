@@ -11,18 +11,9 @@ import io.ktor.server.response.*
 import io.ktor.server.sessions.*
 import org.koin.ktor.ext.inject
 
-/** Session auth provider guarding routes that require any logged-in user. */
 const val AUTH_SESSION = "auth-session"
-
-/** Session auth provider guarding routes that require an administrator. */
 const val AUTH_ADMIN = "auth-admin"
 
-/**
- * Installs cookie-backed sessions and session authentication, and seeds the initial
- * admin user on first boot so the instance is immediately usable.
- *
- * Runs after [configureDatabases] so the schema already exists.
- */
 suspend fun Application.configureAuth() {
     val authConfig by inject<AuthConfig>()
     val userService by inject<UserService>()

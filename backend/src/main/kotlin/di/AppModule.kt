@@ -17,7 +17,6 @@ import org.koin.dsl.module
 
 /** Root Koin module wiring together application-wide singletons. */
 fun appModule(config: ApplicationConfig) = module {
-    // Config-derived singletons need the application config, so they stay as lambdas.
     single { DatabaseConfig.from(config) }
     single { AuthConfig.from(config) }
     single { PasswordHasher() }
@@ -27,7 +26,6 @@ fun appModule(config: ApplicationConfig) = module {
         )
     }
 
-    // Everything else is autowired from its constructor.
     singleOf(::DatabaseService)
     singleOf(::DatabaseSessionStorage)
     singleOf(::UserService)

@@ -23,7 +23,6 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
 
-/** Manages user access tokens and resolves token credentials into a [MavenPrincipal]. */
 class AccessTokenService(private val db: DatabaseService) {
 
     private val random = SecureRandom()

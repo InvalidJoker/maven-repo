@@ -3,7 +3,6 @@ package de.joker.service
 import de.joker.auth.MavenPrincipal
 import de.joker.auth.Permission
 
-/** Resolves the effective [Permission] a [MavenPrincipal] has on a repository. */
 class AccessControlService(
     private val repositories: RepositoryService,
     private val tokens: AccessTokenService,

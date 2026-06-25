@@ -2,26 +2,17 @@ package de.joker.config
 
 import io.ktor.server.config.*
 
-/**
- * Connection settings for the backing database.
- *
- * The active database is selected via the `database.type` property in `application.yaml`
- * (`h2` for an embedded file database, `postgres` for a PostgreSQL server).
- */
 sealed interface DatabaseConfig {
-    /** R2DBC connection URL, e.g. `r2dbc:h2:file:///./data/maven-repo`. */
     val url: String
     val user: String
     val password: String
 
-    /** Embedded, file-based H2 database. Zero external dependencies, ideal for local/dev use. */
     data class H2(val filePath: String) : DatabaseConfig {
         override val url: String get() = "r2dbc:h2:file:///$filePath"
         override val user: String = "root"
         override val password: String = ""
     }
 
-    /** Connection to an external PostgreSQL server. */
     data class Postgres(
         val host: String,
         val port: Int,
@@ -33,7 +24,6 @@ sealed interface DatabaseConfig {
     }
 
     companion object {
-        /** Parses the `database` block of the application configuration. */
         fun from(config: ApplicationConfig): DatabaseConfig {
             val database = config.config("database")
             return when (val type = database.property("type").getString().lowercase()) {

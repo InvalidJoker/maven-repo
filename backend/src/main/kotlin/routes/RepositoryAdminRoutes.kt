@@ -12,7 +12,6 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-/** Admin-only management of repositories and their access grants. */
 fun Route.repositoryAdminRoutes(repositories: RepositoryService, users: UserService) {
     authenticate(AUTH_ADMIN) {
         route("/api/repositories") {

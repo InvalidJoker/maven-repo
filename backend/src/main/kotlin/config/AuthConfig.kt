@@ -2,13 +2,6 @@ package de.joker.config
 
 import io.ktor.server.config.*
 
-/**
- * Authentication settings parsed from the `auth` block of `application.yaml`.
- *
- * @property sessionSecret key used to sign session cookies; override in production.
- * @property sessionMaxAgeSeconds lifetime of the session cookie.
- * @property adminUsername / [adminPassword] seeded on first boot when no users exist.
- */
 data class AuthConfig(
     val sessionSecret: String,
     val sessionMaxAgeSeconds: Long,

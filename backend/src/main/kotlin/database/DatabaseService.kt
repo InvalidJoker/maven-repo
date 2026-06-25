@@ -8,10 +8,6 @@ import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import java.io.File
 
-/**
- * Owns the Exposed [R2dbcDatabase] connection and provides the entry point for all
- * database access. Inject this via Koin wherever persistence is needed.
- */
 class DatabaseService(config: DatabaseConfig) {
 
     val database: R2dbcDatabase = connect(config)
