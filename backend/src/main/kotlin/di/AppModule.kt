@@ -1,5 +1,6 @@
 package de.joker.di
 
+import de.joker.auth.DatabaseSessionStorage
 import de.joker.auth.PasswordHasher
 import de.joker.config.AuthConfig
 import de.joker.config.DatabaseConfig
@@ -13,6 +14,7 @@ fun appModule(config: ApplicationConfig) = module {
     single { DatabaseConfig.from(config) }
     single { AuthConfig.from(config) }
     single { DatabaseService(get()) }
+    single { DatabaseSessionStorage(get()) }
     single { PasswordHasher() }
     single { UserService(get(), get()) }
 }

@@ -2,6 +2,7 @@ package de.joker
 
 import de.joker.config.DatabaseConfig
 import de.joker.database.DatabaseService
+import de.joker.database.SessionTable
 import de.joker.database.UserTable
 import io.ktor.server.application.*
 import org.koin.ktor.ext.inject
@@ -20,5 +21,5 @@ suspend fun Application.configureDatabases() {
     }
     log.info("Initializing database: $target")
 
-    databaseService.initSchema(UserTable)
+    databaseService.initSchema(UserTable, SessionTable)
 }

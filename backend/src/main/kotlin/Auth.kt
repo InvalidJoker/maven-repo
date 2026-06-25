@@ -1,5 +1,6 @@
 package de.joker
 
+import de.joker.auth.DatabaseSessionStorage
 import de.joker.auth.UserSession
 import de.joker.config.AuthConfig
 import de.joker.service.UserService
@@ -25,9 +26,13 @@ const val AUTH_ADMIN = "auth-admin"
 suspend fun Application.configureAuth() {
     val authConfig by inject<AuthConfig>()
     val userService by inject<UserService>()
+    val sessionStorage by inject<DatabaseSessionStorage>()
+
+    // Hydrate the in-memory session cache from the database so logins survive restarts.
+    sessionStorage.loadAll()
 
     install(Sessions) {
-        cookie<UserSession>("user_session") {
+        cookie<UserSession>("user_session", sessionStorage) {
             cookie.path = "/"
             cookie.httpOnly = true
             cookie.maxAgeInSeconds = authConfig.sessionMaxAgeSeconds
