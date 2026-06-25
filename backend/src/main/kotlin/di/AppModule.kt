@@ -12,23 +12,27 @@ import de.joker.service.RepositoryService
 import de.joker.service.RepositoryStorageService
 import de.joker.service.UserService
 import io.ktor.server.config.*
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 /** Root Koin module wiring together application-wide singletons. */
 fun appModule(config: ApplicationConfig) = module {
+    // Config-derived singletons need the application config, so they stay as lambdas.
     single { DatabaseConfig.from(config) }
     single { AuthConfig.from(config) }
-    single { DatabaseService(get()) }
-    single { DatabaseSessionStorage(get()) }
     single { PasswordHasher() }
-    single { UserService(get(), get()) }
-    single { RepositoryService(get()) }
-    single { AccessTokenService(get()) }
-    single { AccessControlService(get(), get()) }
     single {
         RepositoryStorageService(
             config.propertyOrNull("repository.storagePath")?.getString() ?: "./data/repositories",
         )
     }
-    single { RepositoryBrowserService(get()) }
+
+    // Everything else is autowired from its constructor.
+    singleOf(::DatabaseService)
+    singleOf(::DatabaseSessionStorage)
+    singleOf(::UserService)
+    singleOf(::RepositoryService)
+    singleOf(::AccessTokenService)
+    singleOf(::AccessControlService)
+    singleOf(::RepositoryBrowserService)
 }

@@ -49,7 +49,7 @@ export function Browser({ repo, path }: { repo: string; path: string }) {
       {error && <Card className="p-4 text-sm text-red-400">{error}</Card>}
 
       {data && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_480px]">
           <div>
             {segs.length > 0 && (
               <button

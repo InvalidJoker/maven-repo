@@ -22,7 +22,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const top = segments(route)[0] ?? ''
 
   return (
-    <div className="mx-auto flex min-h-full max-w-4xl flex-col px-4">
+    <div className="mx-auto flex min-h-full max-w-6xl flex-col px-4">
       <header className="flex items-center justify-between border-b border-neutral-800 py-4">
         <div className="flex items-center gap-1">
           <button onClick={() => navigate('/')} className="mr-4 font-semibold tracking-tight text-neutral-100">
