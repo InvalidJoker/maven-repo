@@ -2,14 +2,15 @@ package de.joker
 
 import de.joker.config.DatabaseConfig
 import de.joker.database.DatabaseService
+import de.joker.database.UserTable
 import io.ktor.server.application.*
 import org.koin.ktor.ext.inject
 
 /**
- * Eagerly establishes the database connection on startup so misconfiguration fails fast,
- * and is the single place to register schema creation as tables are added.
+ * Connects to the configured database, failing fast on misconfiguration, and creates any
+ * missing tables. This is the single place where Exposed tables are registered for creation.
  */
-fun Application.configureDatabases() {
+suspend fun Application.configureDatabases() {
     val config by inject<DatabaseConfig>()
     val databaseService by inject<DatabaseService>()
 
@@ -19,9 +20,5 @@ fun Application.configureDatabases() {
     }
     log.info("Initializing database: $target")
 
-    // Touch the connection so any failure surfaces during boot rather than on first request.
-    databaseService.database
-
-    // Register schema creation here as tables are introduced, e.g.:
-    // launch { databaseService.initSchema(Artifacts, Repositories) }
+    databaseService.initSchema(UserTable)
 }

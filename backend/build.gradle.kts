@@ -11,12 +11,15 @@ application {
 
 dependencies {
     implementation(ktorLibs.serialization.kotlinx.json)
+    implementation(ktorLibs.server.auth)
     implementation(ktorLibs.server.callLogging)
     implementation(ktorLibs.server.config.yaml)
     implementation(ktorLibs.server.contentNegotiation)
     implementation(ktorLibs.server.core)
     implementation(ktorLibs.server.cors)
     implementation(ktorLibs.server.netty)
+    implementation(ktorLibs.server.sessions)
+    implementation(libs.bcrypt)
     implementation(libs.exposed.core)
     implementation(libs.exposed.r2dbc)
     implementation(libs.h2database.h2)
