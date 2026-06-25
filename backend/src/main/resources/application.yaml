@@ -1,0 +1,11 @@
+ktor:
+  deployment:
+    port: 8080
+  application:
+    modules:
+      - de.joker.HttpKt.configureHttp
+      - de.joker.SerializationKt.configureSerialization
+      - de.joker.PostgresKt.configurePostgres
+      - de.joker.KoinKt.configureKoin
+      - de.joker.ExposedKt.configureExposed
+      - de.joker.RoutingKt.configureRouting
