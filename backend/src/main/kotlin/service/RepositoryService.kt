@@ -83,6 +83,14 @@ class RepositoryService(private val db: DatabaseService) {
             .singleOrNull()
     }
 
+    /** Public repositories, visible to anonymous visitors (read-only). */
+    suspend fun listPublic(): List<UserRepositoryDto> = db.query {
+        RepositoryTable.selectAll()
+            .where { RepositoryTable.private eq false }
+            .map { UserRepositoryDto(it[RepositoryTable.name], false, Permission.READ) }
+            .toList()
+    }
+
     /**
      * Repositories visible to a user with their effective permission: admins see everything as
      * writable, other users see repositories they were granted plus public ones as read-only.

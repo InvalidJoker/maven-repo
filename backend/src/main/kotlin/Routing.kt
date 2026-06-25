@@ -3,8 +3,8 @@ package de.joker
 import de.joker.routes.authRoutes
 import de.joker.routes.mavenRoutes
 import de.joker.routes.repositoryAdminRoutes
+import de.joker.routes.repositoryBrowseRoutes
 import de.joker.routes.tokenRoutes
-import de.joker.routes.userRoutes
 import de.joker.service.AccessControlService
 import de.joker.service.AccessTokenService
 import de.joker.service.RepositoryService
@@ -29,7 +29,7 @@ fun Application.configureRouting() {
         }
 
         authRoutes(userService)
-        userRoutes(repositoryService)
+        repositoryBrowseRoutes(repositoryService)
         repositoryAdminRoutes(repositoryService, userService)
         tokenRoutes(accessTokenService, repositoryService)
         mavenRoutes(repositoryService, accessTokenService, accessControlService, storageService)

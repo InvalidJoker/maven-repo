@@ -76,10 +76,12 @@ export const api = {
   me: () => request<User>('GET', '/auth/me'),
   login: (username: string, password: string) =>
     request<User>('POST', '/auth/login', { username, password }),
+  register: (username: string, password: string) =>
+    request<User>('POST', '/auth/register', { username, password }),
   logout: () => request<void>('POST', '/auth/logout'),
 
-  // current user
-  myRepositories: () => request<UserRepository[]>('GET', '/api/me/repositories'),
+  // repositories visible to the caller (public ones for anonymous visitors)
+  visibleRepositories: () => request<UserRepository[]>('GET', '/api/repositories/visible'),
 
   // tokens (current user)
   tokens: () => request<Token[]>('GET', '/api/tokens'),

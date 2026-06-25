@@ -12,7 +12,7 @@ export function Tokens() {
   const [error, setError] = useState('')
 
   const reload = () => {
-    Promise.all([api.tokens(), api.myRepositories()])
+    Promise.all([api.tokens(), api.visibleRepositories()])
       .then(([t, r]) => {
         setTokens(t)
         setRepos(r)

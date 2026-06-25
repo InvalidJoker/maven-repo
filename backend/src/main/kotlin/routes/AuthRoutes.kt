@@ -15,6 +15,25 @@ import io.ktor.server.sessions.*
 /** Mounts `/auth` login, logout and current-user endpoints. */
 fun Route.authRoutes(userService: UserService) {
     route("/auth") {
+        post("/register") {
+            val request = call.receive<LoginRequest>()
+            val username = request.username.trim()
+            if (username.length < 3 || request.password.length < 6) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "Username must be at least 3 and password at least 6 characters"),
+                )
+                return@post
+            }
+            if (userService.findByUsername(username) != null) {
+                call.respond(HttpStatusCode.Conflict, mapOf("error" to "Username already taken"))
+                return@post
+            }
+            val user = userService.createUser(username, request.password, admin = false)
+            call.sessions.set(UserSession(user.id, user.username, user.admin))
+            call.respond(HttpStatusCode.Created, user)
+        }
+
         post("/login") {
             val request = call.receive<LoginRequest>()
             val user = userService.authenticate(request.username, request.password)

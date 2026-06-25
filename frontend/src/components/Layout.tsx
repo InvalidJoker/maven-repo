@@ -29,14 +29,25 @@ export function Layout({ children }: { children: ReactNode }) {
             maven<span className="text-neutral-500">/repo</span>
           </button>
           <NavLink to="/" label="Repositories" active={top === ''} />
-          <NavLink to="/tokens" label="Tokens" active={top === 'tokens'} />
+          {user && <NavLink to="/tokens" label="Tokens" active={top === 'tokens'} />}
           {user?.admin && <NavLink to="/admin" label="Admin" active={top === 'admin'} />}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-neutral-500">{user?.username}</span>
-          <Button variant="ghost" onClick={logout}>
-            Sign out
-          </Button>
+          {user ? (
+            <>
+              <span className="text-sm text-neutral-500">{user.username}</span>
+              <Button variant="ghost" onClick={logout}>
+                Sign out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={() => navigate('/login')}>
+                Sign in
+              </Button>
+              <Button onClick={() => navigate('/register')}>Register</Button>
+            </>
+          )}
         </div>
       </header>
       <main className="flex-1 py-8">{children}</main>

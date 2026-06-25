@@ -12,14 +12,14 @@ export function Dashboard() {
 
   useEffect(() => {
     api
-      .myRepositories()
+      .visibleRepositories()
       .then(setRepos)
       .catch(() => setError('Failed to load repositories'))
   }, [])
 
   return (
     <div>
-      <PageHeading title="Repositories" subtitle="Repositories you can access." />
+      <PageHeading title="Repositories" subtitle="Browse the repositories available to you." />
 
       {error && <p className="text-sm text-red-400">{error}</p>}
 
