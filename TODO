@@ -12,12 +12,7 @@
 
 - password change
 - token reroll
-- s3 support as storage backend (like we do with dbs)
- - add qutoa support for storage backend
+
+- add qutoa support for storage backend
 
 - add upload limits
-
-- remove signups again
- - add create user for admins
-
-- generate admin password instead of having it as a env variable

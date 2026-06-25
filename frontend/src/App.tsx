@@ -3,11 +3,11 @@ import { useAuth } from './auth'
 import { navigate, segments, useHashRoute } from './router'
 import { Layout } from './components/Layout'
 import { Login } from './pages/Login'
-import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
 import { Browser } from './pages/Browser'
 import { Tokens } from './pages/Tokens'
 import { Admin } from './pages/Admin'
+import { AdminUsers } from './pages/AdminUsers'
 import { RepoPermissions } from './pages/RepoPermissions'
 import { Button } from './ui'
 import type { User } from './api'
@@ -40,6 +40,7 @@ function resolve(parts: string[], user: User | null): ReactNode {
     if (!user) return <NeedsAuth />
     if (!user.admin) return <Centered>You don't have access to this page.</Centered>
     if (parts[1] === 'repos' && parts[2]) return <RepoPermissions repo={parts[2]} />
+    if (parts[1] === 'users') return <AdminUsers />
     return <Admin />
   }
 
@@ -54,9 +55,8 @@ export default function App() {
 
   const parts = segments(route)
 
-  // Full-screen auth pages, only for signed-out visitors.
+  // Full-screen auth page, only for signed-out visitors.
   if (!user && parts[0] === 'login') return <Login />
-  if (!user && parts[0] === 'register') return <Register />
 
   return <Layout>{resolve(parts, user)}</Layout>
 }

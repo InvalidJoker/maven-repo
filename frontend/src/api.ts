@@ -110,8 +110,6 @@ export const api = {
   me: () => request<User>('GET', '/auth/me'),
   login: (username: string, password: string) =>
     request<User>('POST', '/auth/login', { username, password }),
-  register: (username: string, password: string) =>
-    request<User>('POST', '/auth/register', { username, password }),
   logout: () => request<void>('POST', '/auth/logout'),
 
   // repositories visible to the caller (public ones for anonymous visitors)
@@ -157,4 +155,9 @@ export const api = {
       'DELETE',
       `/api/repositories/${encodeURIComponent(repo)}/permissions/${encodeURIComponent(username)}`,
     ),
+
+  // users (admin)
+  users: () => request<User[]>('GET', '/api/users'),
+  createUser: (username: string, password: string, admin: boolean) =>
+    request<User>('POST', '/api/users', { username, password, admin }),
 }

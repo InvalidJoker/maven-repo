@@ -41,12 +41,7 @@ export function Layout({ children }: { children: ReactNode }) {
               </Button>
             </>
           ) : (
-            <>
-              <Button variant="ghost" onClick={() => navigate('/login')}>
-                Sign in
-              </Button>
-              <Button onClick={() => navigate('/register')}>Register</Button>
-            </>
+            <Button onClick={() => navigate('/login')}>Sign in</Button>
           )}
         </div>
       </header>

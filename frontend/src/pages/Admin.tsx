@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { api, type Repository } from '../api'
 import { navigate } from '../router'
+import { AdminNav } from '../components/AdminNav'
 import { Button, Card, ErrorText, Input, PageHeading, VisibilityBadge } from '../ui'
 
 export function Admin() {
@@ -35,6 +36,7 @@ export function Admin() {
 
   return (
     <div>
+      <AdminNav active="repositories" />
       <PageHeading title="Repositories" subtitle="Create repositories and manage who can access them." />
 
       <Card className="mb-6 p-4">

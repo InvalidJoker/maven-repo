@@ -6,6 +6,7 @@ import de.joker.database.DatabaseService
 import de.joker.database.UserTable
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.singleOrNull
+import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.selectAll
@@ -39,6 +40,12 @@ class UserService(
             .where { UserTable.username eq username }
             .map { UserDto(it[UserTable.id].value, it[UserTable.username], it[UserTable.admin]) }
             .singleOrNull()
+    }
+
+    suspend fun list(): List<UserDto> = db.query {
+        UserTable.selectAll()
+            .map { UserDto(it[UserTable.id].value, it[UserTable.username], it[UserTable.admin]) }
+            .toList()
     }
 
     suspend fun count(): Long = db.query { UserTable.selectAll().count() }

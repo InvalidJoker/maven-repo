@@ -6,7 +6,6 @@ interface AuthState {
   user: User | null
   loading: boolean
   login: (username: string, password: string) => Promise<void>
-  register: (username: string, password: string) => Promise<void>
   logout: () => Promise<void>
 }
 
@@ -28,10 +27,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(await api.login(username, password))
   }
 
-  const register = async (username: string, password: string) => {
-    setUser(await api.register(username, password))
-  }
-
   const logout = async () => {
     await api.logout()
     setUser(null)
@@ -39,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

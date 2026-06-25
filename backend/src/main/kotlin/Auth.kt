@@ -10,6 +10,8 @@ import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.sessions.*
 import org.koin.ktor.ext.inject
+import java.security.SecureRandom
+import java.util.Base64
 
 const val AUTH_SESSION = "auth-session"
 const val AUTH_ADMIN = "auth-admin"
@@ -48,7 +50,27 @@ suspend fun Application.configureAuth() {
     }
 
     if (userService.count() == 0L) {
-        userService.createUser(authConfig.adminUsername, authConfig.adminPassword, admin = true)
-        log.info("Seeded initial admin user '${authConfig.adminUsername}'")
+        val password = generatePassword()
+        userService.createUser(authConfig.adminUsername, password, admin = true)
+        log.warn(
+            """
+            |
+            |============================================================
+            | Generated initial admin account — store this now, it is
+            | shown only once and cannot be recovered:
+            |
+            |   username: ${authConfig.adminUsername}
+            |   password: $password
+            |
+            | Sign in and change it (or create your own users) right away.
+            |============================================================
+            """.trimMargin(),
+        )
     }
+}
+
+/** Generates a random URL-safe password for the seeded admin account. */
+private fun generatePassword(): String {
+    val bytes = ByteArray(24).also { SecureRandom().nextBytes(it) }
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
 }
