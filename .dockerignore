@@ -1,0 +1,21 @@
+# VCS / IDE
+.git
+.github
+.idea
+.vscode
+.kotlin
+
+# Gradle
+.gradle
+build
+**/build
+
+# Node / frontend
+**/node_modules
+frontend/dist
+
+# Runtime data & local artifacts
+data
+*.db
+*.log
+.DS_Store
