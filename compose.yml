@@ -1,0 +1,64 @@
+# Example Docker Compose setup for the self-hosted Maven repository.
+#
+#   docker compose up -d --build
+#
+# The generated admin password is printed once in the logs on first boot:
+#   docker compose logs maven-repo | grep -A6 "admin account"
+#
+# This example runs the app against PostgreSQL with local (volume-backed) artifact storage.
+# For a zero-dependency setup, see the H2 note on DATABASE_TYPE below and drop the postgres service.
+
+services:
+  maven-repo:
+    image: ghcr.io/invalidjoker/maven-repo:latest
+    # Or pull a published image instead of building:
+    # image: ghcr.io/invalidjoker/maven-repo:latest
+    ports:
+      - "8080:8080"
+    environment:
+      # --- Auth ---
+      SESSION_SECRET: "change-me-to-a-long-random-secret-value"
+      ADMIN_USERNAME: "admin"
+      # Set to "true" for a single boot to regenerate + re-print the admin password if it was lost.
+      ADMIN_RESET_PASSWORD: "false"
+
+      # --- Database ---
+      # Use "h2" instead for an embedded, file-based DB (then the postgres service is not needed).
+      DATABASE_TYPE: "postgres"
+      DATABASE_HOST: "postgres"
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: "maven_repo"
+      DATABASE_USER: "maven"
+      DATABASE_PASSWORD: "maven"
+
+      # --- Storage ---
+      # "local" stores artifacts under the data volume. For S3-compatible object storage, set
+      # STORAGE_TYPE=s3 and provide S3_BUCKET / S3_REGION / S3_ACCESS_KEY_ID /
+      # S3_SECRET_ACCESS_KEY (and S3_ENDPOINT for MinIO/R2/B2).
+      STORAGE_TYPE: "local"
+    volumes:
+      # Persists artifacts (local storage), instance branding, and the H2 file (if used).
+      - maven-data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: "maven_repo"
+      POSTGRES_USER: "maven"
+      POSTGRES_PASSWORD: "maven"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U maven -d maven_repo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  maven-data:
+  postgres-data:
