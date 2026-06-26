@@ -5,11 +5,13 @@ import de.joker.model.BrowseEntry
 import de.joker.model.BrowseResponse
 import de.joker.model.SearchResultDto
 import de.joker.model.VersionInfo
+import de.joker.service.storage.StorageBackend
+import de.joker.service.storage.StorageEntry
 
 /**
  * Turns a repository directory into a [BrowseResponse]: a sorted listing plus inferred Maven
  * coordinates so the UI can show install instructions. Detection follows the standard layout
- * `group/parts/artifactId/version/files`. Works over any [StorageBackend].
+ * `group/parts/artifactId/version/files`. Works over any [de.joker.service.storage.StorageBackend].
  */
 class RepositoryBrowserService(private val storage: StorageBackend) {
 

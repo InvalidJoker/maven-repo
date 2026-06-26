@@ -1,4 +1,4 @@
-package de.joker.service
+package de.joker.service.storage
 
 import java.io.Closeable
 import java.io.InputStream

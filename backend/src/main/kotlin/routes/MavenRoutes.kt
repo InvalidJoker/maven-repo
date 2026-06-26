@@ -7,7 +7,7 @@ import de.joker.model.RepositoryDto
 import de.joker.service.AccessControlService
 import de.joker.service.AccessTokenService
 import de.joker.service.RepositoryService
-import de.joker.service.StorageBackend
+import de.joker.service.storage.StorageBackend
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*

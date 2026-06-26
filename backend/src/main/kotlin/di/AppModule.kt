@@ -10,7 +10,7 @@ import de.joker.service.AccessControlService
 import de.joker.service.AccessTokenService
 import de.joker.service.RepositoryBrowserService
 import de.joker.service.RepositoryService
-import de.joker.service.StorageBackend
+import de.joker.service.storage.StorageBackend
 import de.joker.service.UserService
 import de.joker.service.storage.LocalStorageBackend
 import de.joker.service.storage.S3StorageBackend
