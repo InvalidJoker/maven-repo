@@ -1,0 +1,2 @@
+io.r2dbc.h2.H2ConnectionFactoryProvider
+io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider

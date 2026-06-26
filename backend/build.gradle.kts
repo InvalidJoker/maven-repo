@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     kotlin("jvm")
@@ -53,4 +54,9 @@ kotlin {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+// Hacky fix for postgres missing...
+tasks.named<ShadowJar>("shadowJar") {
+    mergeServiceFiles()
 }
