@@ -3,6 +3,7 @@ package de.joker.service
 import de.joker.model.ArtifactInfo
 import de.joker.model.BrowseEntry
 import de.joker.model.BrowseResponse
+import de.joker.model.EntryKind
 import de.joker.model.SearchResultDto
 import de.joker.model.VersionInfo
 import de.joker.service.storage.StorageBackend
@@ -24,7 +25,7 @@ class RepositoryBrowserService(private val storage: StorageBackend) {
                 compareByDescending<StorageEntry> { it.directory }
                     .thenComparator { a, b -> compareEntryNames(a.name, b.name) },
             )
-            .map { BrowseEntry(it.name, it.directory, it.size) }
+            .map { BrowseEntry(it.name, it.directory, it.size, kindOf(repository, path, it)) }
 
         val versionDirs = listing.filter { it.directory && isVersion(it.name) }.map { it.name }
 
@@ -90,6 +91,16 @@ class RepositoryBrowserService(private val storage: StorageBackend) {
         walk("", emptyList())
         return results
     }
+
+    private suspend fun kindOf(repository: String, path: String, entry: StorageEntry): EntryKind = when {
+        !entry.directory -> EntryKind.FILE
+        isVersion(entry.name) -> EntryKind.VERSION
+        isPackage(repository, if (path.isEmpty()) entry.name else "$path/${entry.name}") -> EntryKind.PACKAGE
+        else -> EntryKind.FOLDER
+    }
+
+    private suspend fun isPackage(repository: String, path: String): Boolean =
+        storage.list(repository, path)?.any { it.directory && isVersion(it.name) } ?: false
 
     /** Highest version, preferring releases over SNAPSHOTs. */
     private fun latestVersion(versions: List<String>): String {

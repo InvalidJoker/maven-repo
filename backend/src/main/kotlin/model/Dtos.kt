@@ -1,6 +1,7 @@
 package de.joker.model
 
 import de.joker.auth.Permission
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -49,7 +50,20 @@ data class TokenDto(val id: Int, val name: String, val scopes: List<ScopeDto>)
 data class CreatedTokenDto(val token: String, val info: TokenDto)
 
 @Serializable
-data class BrowseEntry(val name: String, val directory: Boolean, val size: Long? = null)
+enum class EntryKind {
+    PACKAGE,
+    VERSION,
+    FOLDER,
+    FILE,
+}
+
+@Serializable
+data class BrowseEntry(
+    val name: String,
+    val directory: Boolean,
+    val size: Long? = null,
+    val kind: EntryKind = EntryKind.FILE,
+)
 
 @Serializable
 data class ArtifactInfo(

@@ -43,6 +43,7 @@ export interface BrowseEntry {
   name: string
   directory: boolean
   size: number | null
+  kind: 'PACKAGE' | 'VERSION' | 'FOLDER' | 'FILE'
 }
 
 export interface ArtifactInfo {

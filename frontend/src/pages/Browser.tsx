@@ -7,6 +7,7 @@ import {
   Hash,
   Package,
   Search,
+  Tag,
 } from 'lucide-react'
 import { api, ApiError, type BrowseEntry, type BrowseResponse, type SearchResult } from '../api'
 import { useAuth } from '../auth'
@@ -35,7 +36,9 @@ function formatSize(bytes: number | null): string {
 }
 
 function EntryIcon({ entry }: { entry: BrowseEntry }) {
-  if (entry.directory) return <Folder className="h-4 w-4 shrink-0 text-indigo-400" />
+  if (entry.kind === 'PACKAGE') return <Package className="h-4 w-4 shrink-0 text-indigo-400" />
+  if (entry.kind === 'VERSION') return <Tag className="h-4 w-4 shrink-0 text-violet-400" />
+  if (entry.directory) return <Folder className="h-4 w-4 shrink-0 text-sky-400" />
   const name = entry.name.toLowerCase()
   if (/\.(jar|war|aar|zip|tar|gz|module)$/.test(name))
     return <FileArchive className="h-4 w-4 shrink-0 text-amber-400" />
