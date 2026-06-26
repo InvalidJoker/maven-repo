@@ -32,10 +32,13 @@ fun Application.configureRouting() {
         }
 
         authRoutes(userService)
-        repositoryBrowseRoutes(repositoryService, browserService, accessControlService)
-        repositoryAdminRoutes(repositoryService, userService)
-        userAdminRoutes(userService)
-        tokenRoutes(accessTokenService, repositoryService)
         mavenRoutes(repositoryService, accessTokenService, accessControlService, storageService)
+
+        route("/api") {
+            repositoryBrowseRoutes(repositoryService, browserService, accessControlService)
+            repositoryAdminRoutes(repositoryService, userService)
+            userAdminRoutes(userService)
+            tokenRoutes(accessTokenService, repositoryService)
+        }
     }
 }

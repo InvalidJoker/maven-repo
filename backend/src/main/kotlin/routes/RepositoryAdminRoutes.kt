@@ -14,7 +14,7 @@ import io.ktor.server.routing.*
 
 fun Route.repositoryAdminRoutes(repositories: RepositoryService, users: UserService) {
     authenticate(AUTH_ADMIN) {
-        route("/api/repositories") {
+        route("/repositories") {
             get {
                 call.respond(repositories.list())
             }

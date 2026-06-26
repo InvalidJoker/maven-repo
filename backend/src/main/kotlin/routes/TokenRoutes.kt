@@ -15,7 +15,7 @@ import io.ktor.server.routing.*
 
 fun Route.tokenRoutes(tokens: AccessTokenService, repositories: RepositoryService) {
     authenticate(AUTH_SESSION) {
-        route("/api/tokens") {
+        route("/tokens") {
             get {
                 val session = call.principal<UserSession>()!!
                 call.respond(tokens.listForUser(session.userId))

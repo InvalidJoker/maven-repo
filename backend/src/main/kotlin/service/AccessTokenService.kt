@@ -78,7 +78,6 @@ class AccessTokenService(private val db: DatabaseService) {
         } > 0
     }
 
-    /** Validates Basic-auth credentials (username + raw token) into a principal, or null. */
     suspend fun verify(username: String, rawToken: String): MavenPrincipal? = db.query {
         val hashed = hash(rawToken)
         (AccessTokenTable innerJoin UserTable).selectAll()

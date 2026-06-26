@@ -71,7 +71,6 @@ class RepositoryService(private val db: DatabaseService) {
             .toList()
     }
 
-    /** Effective permission a user has been granted on a repository, or null if none. */
     suspend fun userPermission(userId: Int, repoId: Int): Permission? = db.query {
         RepositoryPermissionTable.selectAll()
             .where {
@@ -81,7 +80,6 @@ class RepositoryService(private val db: DatabaseService) {
             .singleOrNull()
     }
 
-    /** Public repositories, visible to anonymous visitors (read-only). */
     suspend fun listPublic(): List<UserRepositoryDto> = db.query {
         RepositoryTable.selectAll()
             .where { RepositoryTable.private eq false }
@@ -89,10 +87,6 @@ class RepositoryService(private val db: DatabaseService) {
             .toList()
     }
 
-    /**
-     * Repositories visible to a user with their effective permission: admins see everything as
-     * writable, other users see repositories they were granted plus public ones as read-only.
-     */
     suspend fun listForUser(userId: Int, admin: Boolean): List<UserRepositoryDto> = db.query {
         val repos = RepositoryTable.selectAll()
             .map { Triple(it[RepositoryTable.id].value, it[RepositoryTable.name], it[RepositoryTable.private]) }
@@ -114,7 +108,6 @@ class RepositoryService(private val db: DatabaseService) {
         }
     }
 
-    /** Resolves repository names in [scopes] to ids; returns null if any name is unknown. */
     suspend fun resolveScopes(scopes: List<ScopeDto>): List<ResolvedScope>? {
         val resolved = ArrayList<ResolvedScope>(scopes.size)
         for (scope in scopes) {

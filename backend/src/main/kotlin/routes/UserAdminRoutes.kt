@@ -13,7 +13,7 @@ import io.ktor.server.routing.*
 
 fun Route.userAdminRoutes(users: UserService) {
     authenticate(AUTH_ADMIN) {
-        route("/api/users") {
+        route("/users") {
             get {
                 call.respond(users.list())
             }

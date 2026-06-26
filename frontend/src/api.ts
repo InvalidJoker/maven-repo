@@ -113,7 +113,7 @@ export const api = {
   logout: () => request<void>('POST', '/auth/logout'),
 
   // repositories visible to the caller (public ones for anonymous visitors)
-  visibleRepositories: () => request<UserRepository[]>('GET', '/api/repositories/visible'),
+  visibleRepositories: () => request<UserRepository[]>('GET', '/api/repositories'),
   browse: (repo: string, path: string) => {
     const encoded = path
       .split('/')
