@@ -2,6 +2,7 @@ package de.joker.routes
 
 import de.joker.AUTH_ADMIN
 import de.joker.model.CreateUserRequest
+import de.joker.model.UpdateUserRequest
 import de.joker.service.UserService
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -33,6 +34,36 @@ fun Route.userAdminRoutes(users: UserService) {
                 }
                 val user = users.createUser(username, request.password, admin = request.admin)
                 call.respond(HttpStatusCode.Created, user)
+            }
+
+            put("/{id}") {
+                val id = call.parameters["id"]?.toIntOrNull()
+                    ?: return@put call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid user id"))
+                val request = call.receive<UpdateUserRequest>()
+
+                if (request.admin == null && request.password == null) {
+                    return@put call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Nothing to update"))
+                }
+                if (request.password != null && request.password.length < 6) {
+                    return@put call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to "Password must be at least 6 characters"),
+                    )
+                }
+
+                val target = users.findById(id)
+                    ?: return@put call.respond(HttpStatusCode.NotFound, mapOf("error" to "User not found"))
+
+                // Don't allow demoting the last remaining administrator.
+                if (request.admin == false && target.admin && users.countAdmins() <= 1) {
+                    return@put call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to "Cannot remove the last administrator"),
+                    )
+                }
+
+                users.update(id, request.admin, request.password)
+                call.respond(HttpStatusCode.OK, users.findById(id)!!)
             }
         }
     }

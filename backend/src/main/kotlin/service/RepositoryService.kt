@@ -20,10 +20,8 @@ import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.upsert
 
-/** A scope already resolved against the repository table (carries the repository id). */
 data class ResolvedScope(val repoId: Int, val repoName: String, val permission: Permission)
 
-/** Manages repositories and the admin-granted user permissions on them. */
 class RepositoryService(private val db: DatabaseService) {
 
     suspend fun create(name: String, private: Boolean): RepositoryDto = db.query {

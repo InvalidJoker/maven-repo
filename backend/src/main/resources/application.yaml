@@ -58,3 +58,6 @@ auth:
   # generated and printed to the logs once — there is no password environment variable.
   admin:
     username: "$ADMIN_USERNAME:admin"
+    # Set ADMIN_RESET_PASSWORD=true for one boot to regenerate and re-print the admin password
+    # (recovery if it was lost). Remove/disable it again afterwards.
+    resetPassword: "$ADMIN_RESET_PASSWORD:false"

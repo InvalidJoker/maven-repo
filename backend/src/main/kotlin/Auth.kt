@@ -49,27 +49,45 @@ suspend fun Application.configureAuth() {
         }
     }
 
-    if (userService.count() == 0L) {
-        val password = generatePassword()
-        userService.createUser(authConfig.adminUsername, password, admin = true)
-        log.warn(
-            """
-            |
-            |============================================================
-            | Generated initial admin account — store this now, it is
-            | shown only once and cannot be recovered:
-            |
-            |   username: ${authConfig.adminUsername}
-            |   password: $password
-            |
-            | Sign in and change it (or create your own users) right away.
-            |============================================================
-            """.trimMargin(),
-        )
+    when {
+        // First boot: seed the admin with a generated password.
+        userService.count() == 0L -> {
+            val password = generatePassword()
+            userService.createUser(authConfig.adminUsername, password, admin = true)
+            logCredentials("Generated initial admin account", authConfig.adminUsername, password)
+        }
+
+        // Recovery: ADMIN_RESET_PASSWORD=true regenerates the admin password on this boot.
+        authConfig.adminResetPassword -> {
+            val password = generatePassword()
+            val existing = userService.findByUsername(authConfig.adminUsername)
+            if (existing != null) {
+                userService.update(existing.id, admin = true, password = password)
+            } else {
+                userService.createUser(authConfig.adminUsername, password, admin = true)
+            }
+            logCredentials("Reset admin password (ADMIN_RESET_PASSWORD)", authConfig.adminUsername, password)
+        }
     }
 }
 
-/** Generates a random URL-safe password for the seeded admin account. */
+private fun Application.logCredentials(title: String, username: String, password: String) {
+    log.warn(
+        """
+        |
+        |============================================================
+        | $title — store this now, it is shown only once
+        | and cannot be recovered:
+        |
+        |   username: $username
+        |   password: $password
+        |
+        | Sign in and change it (or create your own users) right away.
+        |============================================================
+        """.trimMargin(),
+    )
+}
+
 private fun generatePassword(): String {
     val bytes = ByteArray(24).also { SecureRandom().nextBytes(it) }
     return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)

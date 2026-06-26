@@ -16,6 +16,9 @@ data class GrantPermissionRequest(val username: String, val permission: Permissi
 data class CreateUserRequest(val username: String, val password: String, val admin: Boolean = false)
 
 @Serializable
+data class UpdateUserRequest(val admin: Boolean? = null, val password: String? = null)
+
+@Serializable
 data class RepositoryPermissionDto(val username: String, val permission: Permission)
 
 @Serializable

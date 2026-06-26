@@ -6,6 +6,7 @@ data class AuthConfig(
     val sessionSecret: String,
     val sessionMaxAgeSeconds: Long,
     val adminUsername: String,
+    val adminResetPassword: Boolean,
 ) {
     companion object {
         fun from(config: ApplicationConfig): AuthConfig {
@@ -15,6 +16,8 @@ data class AuthConfig(
                 sessionMaxAgeSeconds = auth.propertyOrNull("session.maxAgeSeconds")
                     ?.getString()?.toLong() ?: (7 * 24 * 60 * 60),
                 adminUsername = auth.property("admin.username").getString(),
+                adminResetPassword = auth.propertyOrNull("admin.resetPassword")
+                    ?.getString()?.toBooleanStrictOrNull() ?: false,
             )
         }
     }

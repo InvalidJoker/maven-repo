@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.selectAll
+import org.jetbrains.exposed.v1.r2dbc.update
 
 class UserService(
     private val db: DatabaseService,
@@ -40,6 +41,24 @@ class UserService(
             .where { UserTable.username eq username }
             .map { UserDto(it[UserTable.id].value, it[UserTable.username], it[UserTable.admin]) }
             .singleOrNull()
+    }
+
+    suspend fun findById(id: Int): UserDto? = db.query {
+        UserTable.selectAll()
+            .where { UserTable.id eq id }
+            .map { UserDto(it[UserTable.id].value, it[UserTable.username], it[UserTable.admin]) }
+            .singleOrNull()
+    }
+
+    suspend fun update(userId: Int, admin: Boolean?, password: String?): Boolean = db.query {
+        UserTable.update({ UserTable.id eq userId }) {
+            if (admin != null) it[UserTable.admin] = admin
+            if (password != null) it[passwordHash] = hasher.hash(password)
+        } > 0
+    }
+
+    suspend fun countAdmins(): Long = db.query {
+        UserTable.selectAll().where { UserTable.admin eq true }.count()
     }
 
     suspend fun list(): List<UserDto> = db.query {

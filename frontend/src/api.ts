@@ -160,4 +160,6 @@ export const api = {
   users: () => request<User[]>('GET', '/api/users'),
   createUser: (username: string, password: string, admin: boolean) =>
     request<User>('POST', '/api/users', { username, password, admin }),
+  updateUser: (id: number, changes: { admin?: boolean; password?: string }) =>
+    request<User>('PUT', `/api/users/${id}`, changes),
 }
