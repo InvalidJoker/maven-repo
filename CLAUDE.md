@@ -44,6 +44,9 @@ There are **no signups** — admins create users (`/api/users`). The initial adm
 ### Maven & browsing
 The Maven endpoints live at `/maven/<repo>/<path...>` (standard Maven layout `group/parts/artifactId/version/files`). The browser API (`/api/repositories/{repo}/tree/...` and `/search`) and `RepositoryBrowserService` infer Maven coordinates **heuristically from the path shape** — a directory holding version subdirectories is an "artifact"; a version directory is any segment starting with a digit. There is no `maven-metadata.xml` parsing.
 
+### Conventions
+Don't write boilerplate or ceremony for self-explanatory code. DTOs/data classes, simple mappers, and obvious one-liners should not get doc comments, factory functions, builders, or wrapper helpers — keep them plain. Only add a comment or a dedicated function when it carries non-obvious intent (a tricky invariant, a heuristic, a security/permission rule). Match the surrounding terseness.
+
 ### Frontend
 Hash-based routing (`/#/...`) implemented by hand in `src/router.ts` — no router library — so Ktor only needs `staticResources("/", "web")` and API/Maven routes win by path specificity. `src/auth.tsx` holds the auth context; `src/api.ts` is the typed client. Icons are `lucide-react`.
 
