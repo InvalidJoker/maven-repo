@@ -8,6 +8,7 @@ import { Browser } from './pages/Browser'
 import { Tokens } from './pages/Tokens'
 import { Admin } from './pages/Admin'
 import { AdminUsers } from './pages/AdminUsers'
+import { AdminConfig } from './pages/AdminConfig'
 import { RepoPermissions } from './pages/RepoPermissions'
 import { Button } from './ui'
 import type { User } from './api'
@@ -41,6 +42,7 @@ function resolve(parts: string[], user: User | null): ReactNode {
     if (!user.admin) return <Centered>You don't have access to this page.</Centered>
     if (parts[1] === 'repos' && parts[2]) return <RepoPermissions repo={parts[2]} />
     if (parts[1] === 'users') return <AdminUsers />
+    if (parts[1] === 'config') return <AdminConfig />
     return <Admin />
   }
 

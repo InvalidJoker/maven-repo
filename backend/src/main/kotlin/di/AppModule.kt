@@ -8,6 +8,7 @@ import de.joker.config.StorageConfig
 import de.joker.database.DatabaseService
 import de.joker.service.AccessControlService
 import de.joker.service.AccessTokenService
+import de.joker.service.InstanceSettingsService
 import de.joker.service.RepositoryBrowserService
 import de.joker.service.RepositoryService
 import de.joker.service.storage.StorageBackend
@@ -23,6 +24,9 @@ fun appModule(config: ApplicationConfig) = module {
     single { AuthConfig.from(config) }
     single { StorageConfig.from(config) }
     single { PasswordHasher() }
+    single {
+        InstanceSettingsService(config.propertyOrNull("instance.dataPath")?.getString() ?: "./data")
+    }
 
     single<StorageBackend> {
         when (val storage = get<StorageConfig>()) {

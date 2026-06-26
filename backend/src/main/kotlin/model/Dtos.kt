@@ -25,6 +25,15 @@ data class RepositoryPermissionDto(val username: String, val permission: Permiss
 data class UserRepositoryDto(val name: String, val private: Boolean, val permission: Permission)
 
 @Serializable
+data class InstanceSettings(val name: String, val iconUrl: String? = null)
+
+@Serializable
+data class UpdateInstanceRequest(val name: String)
+
+@Serializable
+data class SetIconUrlRequest(val url: String)
+
+@Serializable
 data class ScopeDto(val repository: String, val permission: Permission)
 
 @Serializable

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useAuth } from '../auth'
+import { useInstance } from '../instance'
 import { navigate, useHashRoute, segments } from '../router'
 import { Button } from '../ui'
 
@@ -18,6 +19,7 @@ function NavLink({ to, label, active }: { to: string; label: string; active: boo
 
 export function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
+  const { name, iconUrl } = useInstance()
   const route = useHashRoute()
   const top = segments(route)[0] ?? ''
 
@@ -25,8 +27,12 @@ export function Layout({ children }: { children: ReactNode }) {
     <div className="mx-auto flex min-h-full max-w-6xl flex-col px-4">
       <header className="flex items-center justify-between border-b border-slate-800 py-4">
         <div className="flex items-center gap-1">
-          <button onClick={() => navigate('/')} className="mr-4 font-semibold tracking-tight text-slate-100">
-            maven<span className="text-indigo-400">/repo</span>
+          <button
+            onClick={() => navigate('/')}
+            className="mr-4 flex items-center gap-2 font-semibold tracking-tight text-slate-100"
+          >
+            {iconUrl && <img src={iconUrl} alt="" className="h-5 w-5 rounded object-contain" />}
+            {name}
           </button>
           <NavLink to="/" label="Repositories" active={top === ''} />
           {user && <NavLink to="/tokens" label="Tokens" active={top === 'tokens'} />}

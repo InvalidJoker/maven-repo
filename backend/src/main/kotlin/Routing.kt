@@ -4,10 +4,12 @@ import de.joker.routes.authRoutes
 import de.joker.routes.mavenRoutes
 import de.joker.routes.repositoryAdminRoutes
 import de.joker.routes.repositoryBrowseRoutes
+import de.joker.routes.instanceRoutes
 import de.joker.routes.tokenRoutes
 import de.joker.routes.userAdminRoutes
 import de.joker.service.AccessControlService
 import de.joker.service.AccessTokenService
+import de.joker.service.InstanceSettingsService
 import de.joker.service.RepositoryBrowserService
 import de.joker.service.RepositoryService
 import de.joker.service.storage.StorageBackend
@@ -25,6 +27,7 @@ fun Application.configureRouting() {
     val accessControlService by inject<AccessControlService>()
     val storageService by inject<StorageBackend>()
     val browserService by inject<RepositoryBrowserService>()
+    val instanceSettings by inject<InstanceSettingsService>()
 
     routing {
         get("/health") {
@@ -35,6 +38,7 @@ fun Application.configureRouting() {
         mavenRoutes(repositoryService, accessTokenService, accessControlService, storageService)
 
         route("/api") {
+            instanceRoutes(instanceSettings)
             repositoryBrowseRoutes(repositoryService, browserService, accessControlService)
             repositoryAdminRoutes(repositoryService, userService)
             userAdminRoutes(userService)

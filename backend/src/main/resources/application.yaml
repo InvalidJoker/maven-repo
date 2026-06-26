@@ -27,6 +27,10 @@ database:
     user: "$DATABASE_USER:postgres"
     password: "$DATABASE_PASSWORD:postgres"
 
+instance:
+  # Folder for instance settings (branding name + icon), stored as files, not in the database.
+  dataPath: "$DATA_PATH:./data"
+
 storage:
   # Selects the active storage backend: "local" (local file system) or "s3".
   type: "$STORAGE_TYPE:local"

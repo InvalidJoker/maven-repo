@@ -73,6 +73,11 @@ export interface SearchResult {
   latestVersion: string
 }
 
+export interface Instance {
+  name: string
+  iconUrl: string | null
+}
+
 export class ApiError extends Error {
   status: number
 
@@ -155,6 +160,29 @@ export const api = {
       'DELETE',
       `/api/repositories/${encodeURIComponent(repo)}/permissions/${encodeURIComponent(username)}`,
     ),
+
+  // instance branding
+  instance: () => request<Instance>('GET', '/api/instance'),
+  updateInstanceName: (name: string) => request<Instance>('PUT', '/api/instance', { name }),
+  setInstanceIconUrl: (url: string) => request<Instance>('PUT', '/api/instance/icon', { url }),
+  uploadInstanceIcon: async (file: File) => {
+    const response = await fetch('/api/instance/icon', {
+      method: 'POST',
+      body: file,
+      headers: { 'Content-Type': file.type },
+      credentials: 'include',
+    })
+    if (!response.ok) {
+      let message = response.statusText
+      try {
+        message = (await response.json()).error ?? message
+      } catch {
+        // ignore
+      }
+      throw new ApiError(response.status, message)
+    }
+  },
+  resetInstanceIcon: () => request<void>('DELETE', '/api/instance/icon'),
 
   // users (admin)
   users: () => request<User[]>('GET', '/api/users'),
