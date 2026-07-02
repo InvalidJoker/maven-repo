@@ -36,7 +36,6 @@ dependencies {
     //testImplementation(ktorLibs.server.testHost)
 }
 
-// Bundle the built frontend into the backend's classpath under `web/`, served by Ktor at `/`.
 tasks.processResources {
     dependsOn(":frontend:buildFrontend")
     from(rootProject.file("frontend/dist")) {

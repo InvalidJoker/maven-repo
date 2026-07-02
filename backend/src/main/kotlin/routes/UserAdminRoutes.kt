@@ -54,7 +54,6 @@ fun Route.userAdminRoutes(users: UserService) {
                 val target = users.findById(id)
                     ?: return@put call.respond(HttpStatusCode.NotFound, mapOf("error" to "User not found"))
 
-                // Don't allow demoting the last remaining administrator.
                 if (request.admin == false && target.admin && users.countAdmins() <= 1) {
                     return@put call.respond(
                         HttpStatusCode.BadRequest,

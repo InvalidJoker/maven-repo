@@ -1,18 +1,8 @@
-# Example Docker Compose setup for the self-hosted Maven repository.
-#
-#   docker compose up -d --build
-#
 # The generated admin password is printed once in the logs on first boot:
 #   docker compose logs maven-repo | grep -A6 "admin account"
-#
-# This example runs the app against PostgreSQL with local (volume-backed) artifact storage.
-# For a zero-dependency setup, see the H2 note on DATABASE_TYPE below and drop the postgres service.
-
 services:
   maven-repo:
     image: ghcr.io/invalidjoker/maven-repo:latest
-    # Or pull a published image instead of building:
-    # image: ghcr.io/invalidjoker/maven-repo:latest
     ports:
       - "8080:8080"
     environment:

@@ -12,11 +12,9 @@ class DatabaseService(config: DatabaseConfig) {
 
     val database: R2dbcDatabase = connect(config)
 
-    /** Runs [block] inside a suspending transaction against the configured database. */
     suspend fun <T> query(block: suspend R2dbcTransaction.() -> T): T =
         suspendTransaction(database) { block() }
 
-    /** Creates any missing tables for the given Exposed [tables]. Safe to call on every boot. */
     suspend fun initSchema(vararg tables: Table) {
         if (tables.isEmpty()) return
         query { SchemaUtils.create(*tables) }
@@ -24,7 +22,6 @@ class DatabaseService(config: DatabaseConfig) {
 
     private fun connect(config: DatabaseConfig): R2dbcDatabase {
         if (config is DatabaseConfig.H2) {
-            // H2 will not create missing parent directories for a file database itself.
             File(config.filePath).absoluteFile.parentFile?.mkdirs()
         }
         return R2dbcDatabase.connect(

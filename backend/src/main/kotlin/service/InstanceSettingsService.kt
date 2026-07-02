@@ -5,10 +5,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
 
-/**
- * Instance branding (display name + optional custom icon), persisted as files under the data
- * folder rather than the database. The icon doubles as the browser favicon.
- */
 class InstanceSettingsService(dataPath: String) {
 
     private val dir = File(dataPath, "instance").apply { mkdirs() }
@@ -36,7 +32,6 @@ class InstanceSettingsService(dataPath: String) {
         val stored = load()
         val iconUrl = when {
             stored.iconUrl != null -> stored.iconUrl
-            // Version the uploaded-icon URL by mtime so the favicon refreshes after a re-upload.
             stored.iconContentType != null && iconFile.exists() -> "/api/instance/icon?v=${iconFile.lastModified()}"
             else -> null
         }

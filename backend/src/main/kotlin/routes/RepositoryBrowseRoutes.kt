@@ -31,7 +31,6 @@ fun Route.repositoryBrowseRoutes(
             val repoName = call.parameters["repo"]!!
             val repo = repositories.findByName(repoName)
 
-            // Hide private repositories the caller can't read behind a 404.
             val canRead = repo != null && (!repo.private || run {
                 val session = call.sessions.get<UserSession>() ?: return@run false
                 val principal = MavenPrincipal(session.userId, session.admin, tokenId = null)

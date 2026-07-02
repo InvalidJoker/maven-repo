@@ -57,10 +57,6 @@ fun Route.mavenRoutes(
 private fun ApplicationCall.artifactPath(): String =
     parameters.getAll("path")?.joinToString("/") ?: ""
 
-/**
- * Authorizes the current call against the repository named in the route, responding with the
- * appropriate error and returning null when access is denied.
- */
 private suspend fun ApplicationCall.authorize(
     required: Permission,
     repositories: RepositoryService,
@@ -74,7 +70,6 @@ private suspend fun ApplicationCall.authorize(
         return null
     }
 
-    // Public repositories permit anonymous reads.
     if (!repo.private && required == Permission.READ) return repo
 
     val principal = resolvePrincipal(tokens)

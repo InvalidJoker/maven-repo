@@ -9,11 +9,6 @@ import de.joker.model.VersionInfo
 import de.joker.service.storage.StorageBackend
 import de.joker.service.storage.StorageEntry
 
-/**
- * Turns a repository directory into a [BrowseResponse]: a sorted listing plus inferred Maven
- * coordinates so the UI can show install instructions. Detection follows the standard layout
- * `group/parts/artifactId/version/files`. Works over any [de.joker.service.storage.StorageBackend].
- */
 class RepositoryBrowserService(private val storage: StorageBackend) {
 
     suspend fun browse(repository: String, path: String): BrowseResponse? {
@@ -80,7 +75,6 @@ class RepositoryBrowserService(private val storage: StorageBackend) {
                 }
             }
 
-            // Recurse only into non-version subdirectories (group path components).
             for (entry in listing) {
                 if (entry.directory && !isVersion(entry.name)) {
                     walk(if (path.isEmpty()) entry.name else "$path/${entry.name}", segments + entry.name)
@@ -102,7 +96,6 @@ class RepositoryBrowserService(private val storage: StorageBackend) {
     private suspend fun isPackage(repository: String, path: String): Boolean =
         storage.list(repository, path)?.any { it.directory && isVersion(it.name) } ?: false
 
-    /** Highest version, preferring releases over SNAPSHOTs. */
     private fun latestVersion(versions: List<String>): String {
         val releases = versions.filterNot { it.contains("SNAPSHOT", ignoreCase = true) }
         val pool = releases.ifEmpty { versions }

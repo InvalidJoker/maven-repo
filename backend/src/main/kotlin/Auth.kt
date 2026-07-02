@@ -21,7 +21,6 @@ suspend fun Application.configureAuth() {
     val userService by inject<UserService>()
     val sessionStorage by inject<DatabaseSessionStorage>()
 
-    // Hydrate the in-memory session cache from the database so logins survive restarts.
     sessionStorage.loadAll()
 
     install(Sessions) {
@@ -50,14 +49,14 @@ suspend fun Application.configureAuth() {
     }
 
     when {
-        // First boot: seed the admin with a generated password.
+        // Seed the admin with a generated password.
         userService.count() == 0L -> {
             val password = generatePassword()
             userService.createUser(authConfig.adminUsername, password, admin = true)
             logCredentials("Generated initial admin account", authConfig.adminUsername, password)
         }
 
-        // Recovery: ADMIN_RESET_PASSWORD=true regenerates the admin password on this boot.
+        // ADMIN_RESET_PASSWORD=true regenerate admin password
         authConfig.adminResetPassword -> {
             val password = generatePassword()
             val existing = userService.findByUsername(authConfig.adminUsername)
