@@ -111,7 +111,7 @@ export function InstallSnippet({ repoUrl, username, coordinates }: InstallSnippe
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`rounded px-2 py-1 text-xs transition-colors ${
-              tab === t.id ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:bg-slate-800'
+              tab === t.id ? 'bg-brand-500 text-white' : 'text-neutral-400 hover:bg-neutral-800'
             }`}
           >
             {t.label}
@@ -120,7 +120,7 @@ export function InstallSnippet({ repoUrl, username, coordinates }: InstallSnippe
       </div>
       <div className="relative">
         <CopyButton text={code} />
-        <pre className="overflow-x-auto rounded-md border border-slate-800 bg-slate-950 p-4 pr-12 text-xs leading-relaxed text-slate-300">
+        <pre className="overflow-x-auto rounded-md border border-neutral-800 bg-neutral-950 p-4 pr-12 text-xs leading-relaxed text-neutral-300">
           {code}
         </pre>
       </div>

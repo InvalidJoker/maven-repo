@@ -47,10 +47,10 @@ export function Tokens() {
 
       {created && (
         <Card className="mb-4 border-emerald-900/60 p-4">
-          <p className="text-sm text-slate-200">
+          <p className="text-sm text-neutral-200">
             Copy your new token now — it won't be shown again.
           </p>
-          <code className="mt-2 block break-all rounded-md border border-slate-800 bg-slate-950 p-3 text-xs text-emerald-300">
+          <code className="mt-2 block break-all rounded-md border border-neutral-800 bg-neutral-950 p-3 text-xs text-emerald-300">
             {created.token}
           </code>
         </Card>
@@ -73,7 +73,7 @@ export function Tokens() {
         {tokens.map((token) => (
           <Card key={token.id} className="flex items-start justify-between p-4">
             <div>
-              <div className="font-medium text-slate-100">{token.name}</div>
+              <div className="font-medium text-neutral-100">{token.name}</div>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {token.scopes.length === 0 ? (
                   <Badge>all repositories</Badge>
@@ -154,23 +154,23 @@ function TokenForm({
     <Card className="mb-4 p-4">
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-xs text-slate-500">Name</label>
+          <label className="mb-1 block text-xs text-neutral-500">Name</label>
           <Input placeholder="e.g. ci-deploy" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
 
         <div>
-          <label className="mb-1 block text-xs text-slate-500">
+          <label className="mb-1 block text-xs text-neutral-500">
             Scopes — leave all on "none" to inherit your full access
           </label>
-          <div className="divide-y divide-slate-800 rounded-md border border-slate-800">
+          <div className="divide-y divide-neutral-800 rounded-md border border-neutral-800">
             {repos.length === 0 && (
-              <div className="p-3 text-sm text-slate-500">No repositories available.</div>
+              <div className="p-3 text-sm text-neutral-500">No repositories available.</div>
             )}
             {repos.map((repo) => {
               const choice = choices[repo.name] ?? 'none'
               return (
                 <div key={repo.name} className="flex items-center justify-between p-3">
-                  <span className="text-sm text-slate-200">{repo.name}</span>
+                  <span className="text-sm text-neutral-200">{repo.name}</span>
                   <div className="flex gap-1">
                     {(['none', 'READ', 'WRITE'] as ScopeChoice[]).map((option) => (
                       <button
@@ -178,8 +178,8 @@ function TokenForm({
                         onClick={() => setChoice(repo.name, option)}
                         className={`rounded px-2 py-1 text-xs transition-colors ${
                           choice === option
-                            ? 'bg-indigo-500 text-white'
-                            : 'text-slate-400 hover:bg-slate-800'
+                            ? 'bg-brand-500 text-white'
+                            : 'text-neutral-400 hover:bg-neutral-800'
                         }`}
                       >
                         {option === 'none' ? 'none' : option.toLowerCase()}

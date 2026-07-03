@@ -19,7 +19,7 @@ export function CopyButton({ text }: { text: string }) {
       type="button"
       onClick={onCopy}
       aria-label="Copy to clipboard"
-      className="absolute right-2 top-2 rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
+      className="absolute right-2 top-2 rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-neutral-200"
     >
       <span className="relative block h-4 w-4">
         <Copy

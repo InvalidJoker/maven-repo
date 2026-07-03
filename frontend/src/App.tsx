@@ -15,7 +15,7 @@ import type { User } from "./api";
 
 function Centered({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-full items-center justify-center text-sm text-slate-500">
+    <div className="flex min-h-full items-center justify-center text-sm text-neutral-500">
       {children}
     </div>
   );

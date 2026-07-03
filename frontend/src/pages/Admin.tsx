@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { api, type Repository } from '../api'
 import { navigate } from '../router'
 import { AdminNav } from '../components/AdminNav'
-import { Button, Card, ErrorText, Input, PageHeading, VisibilityBadge } from '../ui'
+import { Button, Card, ErrorText, Input, PageHeading, Table, Td, Th, VisibilityBadge } from '../ui'
 
 export function Admin() {
   const [repos, setRepos] = useState<Repository[]>([])
@@ -47,12 +47,12 @@ export function Admin() {
             onChange={(e) => setName(e.target.value)}
             className="max-w-xs"
           />
-          <label className="flex items-center gap-2 text-sm text-slate-300">
+          <label className="flex items-center gap-2 text-sm text-neutral-300">
             <input
               type="checkbox"
               checked={isPrivate}
               onChange={(e) => setPrivate(e.target.checked)}
-              className="accent-slate-300"
+              className="accent-brand-500"
             />
             Private
           </label>
@@ -63,19 +63,42 @@ export function Admin() {
         </form>
       </Card>
 
-      <div className="space-y-2">
-        {repos.map((repo) => (
-          <Card key={repo.id} className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-slate-100">{repo.name}</span>
-              <VisibilityBadge isPrivate={repo.private} />
-            </div>
-            <Button variant="ghost" onClick={() => navigate(`/admin/repos/${encodeURIComponent(repo.name)}`)}>
-              Manage access
-            </Button>
-          </Card>
-        ))}
-      </div>
+      <Table
+        head={
+          <tr>
+            <Th>Name</Th>
+            <Th>Visibility</Th>
+            <Th className="text-right">Actions</Th>
+          </tr>
+        }
+      >
+        {repos.length === 0 ? (
+          <tr>
+            <Td className="text-neutral-500" >
+              No repositories yet.
+            </Td>
+            <Td />
+            <Td />
+          </tr>
+        ) : (
+          repos.map((repo) => (
+            <tr key={repo.id} className="hover:bg-neutral-900">
+              <Td className="font-medium text-neutral-100">{repo.name}</Td>
+              <Td>
+                <VisibilityBadge isPrivate={repo.private} />
+              </Td>
+              <Td className="text-right">
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate(`/admin/repos/${encodeURIComponent(repo.name)}`)}
+                >
+                  Manage access
+                </Button>
+              </Td>
+            </tr>
+          ))
+        )}
+      </Table>
     </div>
   )
 }

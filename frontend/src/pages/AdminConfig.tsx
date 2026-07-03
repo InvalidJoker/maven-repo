@@ -54,7 +54,7 @@ export function AdminConfig() {
       <PageHeading title="Configuration" subtitle="Branding for this repository instance." />
 
       <Card className="mb-6 p-4">
-        <h2 className="mb-3 text-sm font-semibold text-slate-200">Name</h2>
+        <h2 className="mb-3 text-sm font-semibold text-neutral-200">Name</h2>
         <form onSubmit={onSaveName} className="flex flex-wrap items-center gap-3">
           <Input
             placeholder="Repository name"
@@ -66,23 +66,23 @@ export function AdminConfig() {
             Save
           </Button>
         </form>
-        <p className="mt-2 text-xs text-slate-500">Shown in the header and the browser tab title.</p>
+        <p className="mt-2 text-xs text-neutral-500">Shown in the header and the browser tab title.</p>
       </Card>
 
       <Card className="p-4">
-        <h2 className="mb-3 text-sm font-semibold text-slate-200">Logo</h2>
+        <h2 className="mb-3 text-sm font-semibold text-neutral-200">Logo</h2>
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-700 bg-slate-900">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-neutral-700 bg-neutral-900">
             {iconUrl ? (
               <img src={iconUrl} alt="logo" className="h-full w-full object-contain" />
             ) : (
-              <span className="text-xs text-slate-600">none</span>
+              <span className="text-xs text-neutral-600">none</span>
             )}
           </div>
 
           <div className="min-w-0 flex-1 space-y-4">
             <form onSubmit={onSetLogoUrl}>
-              <label className="mb-1 block text-xs text-slate-500">Image URL</label>
+              <label className="mb-1 block text-xs text-neutral-500">Image URL</label>
               <div className="flex flex-wrap items-center gap-2">
                 <Input
                   type="url"
@@ -98,14 +98,14 @@ export function AdminConfig() {
             </form>
 
             <div>
-              <label className="mb-1 block text-xs text-slate-500">…or upload an image</label>
+              <label className="mb-1 block text-xs text-neutral-500">…or upload an image</label>
               <div className="flex flex-wrap items-center gap-2">
                 <input
                   ref={fileRef}
                   type="file"
                   accept="image/*"
                   onChange={onUploadIcon}
-                  className="text-sm text-slate-400 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-500 file:px-3 file:py-1.5 file:text-sm file:text-white hover:file:bg-indigo-400"
+                  className="text-sm text-neutral-400 file:mr-3 file:rounded-md file:border-0 file:bg-brand-500 file:px-3 file:py-1.5 file:text-sm file:text-white hover:file:bg-brand-400"
                 />
                 {iconUrl && (
                   <Button variant="ghost" onClick={onResetIcon} disabled={busy}>
@@ -116,7 +116,7 @@ export function AdminConfig() {
             </div>
           </div>
         </div>
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-3 text-xs text-neutral-500">
           Used as the app logo and browser favicon. Uploads are limited to 1&nbsp;MB.
         </p>
       </Card>

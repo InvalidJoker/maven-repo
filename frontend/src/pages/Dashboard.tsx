@@ -31,7 +31,7 @@ export function Dashboard() {
       {error && <p className="text-sm text-red-400">{error}</p>}
 
       {repos && repos.length === 0 && (
-        <Card className="p-6 text-sm text-slate-500">
+        <Card className="p-6 text-sm text-neutral-500">
           No repositories available yet.
         </Card>
       )}
@@ -43,10 +43,10 @@ export function Dashboard() {
             onClick={() => navigate(`/repo/${encodeURIComponent(repo.name)}`)}
             className="block w-full text-left"
           >
-            <Card className="flex items-center justify-between p-4 transition-colors hover:border-slate-700 hover:bg-slate-900">
+            <Card className="flex items-center justify-between p-4 transition-colors hover:border-neutral-700 hover:bg-neutral-900">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-slate-100">
+                  <span className="font-medium text-neutral-100">
                     {repo.name}
                   </span>
                   {user ? (
@@ -56,27 +56,27 @@ export function Dashboard() {
                     </>
                   ) : null}
                 </div>
-                <code className="mt-1 block truncate text-xs text-slate-500">
+                <code className="mt-1 block truncate text-xs text-neutral-500">
                   {repoUrl(repo.name)}
                 </code>
               </div>
-              <span className="ml-3 shrink-0 text-slate-600">→</span>
+              <span className="ml-3 shrink-0 text-neutral-600">→</span>
             </Card>
           </button>
         ))}
       </div>
 
       <Card className="mt-8 p-5">
-        <h2 className="mb-3 text-sm font-semibold text-slate-200">
+        <h2 className="mb-3 text-sm font-semibold text-neutral-200">
           Using a repository in your build
         </h2>
         <InstallSnippet
           repoUrl={`${window.location.origin}/maven/<repository>`}
           username={user?.username}
         />
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-3 text-xs text-neutral-500">
           Public repositories can be read without credentials. Create an access
-          token under <span className="text-slate-300">Tokens</span> to publish
+          token under <span className="text-neutral-300">Tokens</span> to publish
           or read private repositories.
         </p>
       </Card>

@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { api, type Permission, type RepositoryPermission } from '../api'
 import { navigate } from '../router'
-import { Button, Card, ErrorText, Input, PageHeading, PermissionBadge } from '../ui'
+import { Button, Card, ErrorText, Input, PageHeading, PermissionBadge, Table, Td, Th } from '../ui'
 
 export function RepoPermissions({ repo }: { repo: string }) {
   const [permissions, setPermissions] = useState<RepositoryPermission[]>([])
@@ -38,7 +38,7 @@ export function RepoPermissions({ repo }: { repo: string }) {
 
   return (
     <div>
-      <button onClick={() => navigate('/admin')} className="mb-4 text-sm text-slate-500 hover:text-slate-300">
+      <button onClick={() => navigate('/admin')} className="mb-4 text-sm text-neutral-500 hover:text-neutral-300">
         ← Back to repositories
       </button>
       <PageHeading title={`Access · ${repo}`} subtitle="Grant users read or write access to this repository." />
@@ -54,7 +54,7 @@ export function RepoPermissions({ repo }: { repo: string }) {
           <select
             value={permission}
             onChange={(e) => setPermission(e.target.value as Permission)}
-            className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100 focus:outline-none"
+            className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-sm text-neutral-100 focus:outline-none"
           >
             <option value="READ">read</option>
             <option value="WRITE">write</option>
@@ -64,22 +64,37 @@ export function RepoPermissions({ repo }: { repo: string }) {
         </form>
       </Card>
 
-      <div className="space-y-2">
-        {permissions.length === 0 && (
-          <Card className="p-4 text-sm text-slate-500">No users have been granted access.</Card>
+      <Table
+        head={
+          <tr>
+            <Th>User</Th>
+            <Th>Permission</Th>
+            <Th className="text-right">Actions</Th>
+          </tr>
+        }
+      >
+        {permissions.length === 0 ? (
+          <tr>
+            <Td className="text-neutral-500">No users have been granted access.</Td>
+            <Td />
+            <Td />
+          </tr>
+        ) : (
+          permissions.map((entry) => (
+            <tr key={entry.username} className="hover:bg-neutral-900">
+              <Td className="text-neutral-100">{entry.username}</Td>
+              <Td>
+                <PermissionBadge permission={entry.permission} />
+              </Td>
+              <Td className="text-right">
+                <Button variant="danger" onClick={() => onRevoke(entry.username)}>
+                  Revoke
+                </Button>
+              </Td>
+            </tr>
+          ))
         )}
-        {permissions.map((entry) => (
-          <Card key={entry.username} className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-100">{entry.username}</span>
-              <PermissionBadge permission={entry.permission} />
-            </div>
-            <Button variant="danger" onClick={() => onRevoke(entry.username)}>
-              Revoke
-            </Button>
-          </Card>
-        ))}
-      </div>
+      </Table>
     </div>
   )
 }

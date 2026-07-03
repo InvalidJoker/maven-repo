@@ -30,12 +30,12 @@ export function Login() {
       <Card className="w-full max-w-sm p-6">
         <button
           onClick={() => navigate('/')}
-          className="mb-4 text-sm text-slate-500 hover:text-slate-300"
+          className="mb-4 text-sm text-neutral-500 hover:text-neutral-300"
         >
           ← Browse repositories
         </button>
-        <h1 className="mb-1 text-lg font-semibold text-slate-100">Sign in</h1>
-        <p className="mb-5 text-sm text-slate-500">Accounts are created by an administrator.</p>
+        <h1 className="mb-1 text-lg font-semibold text-neutral-100">Sign in</h1>
+        <p className="mb-5 text-sm text-neutral-500">Accounts are created by an administrator.</p>
         <form onSubmit={onSubmit} className="space-y-3">
           <Input
             placeholder="Username"

@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { api, ApiError, type User } from '../api'
 import { AdminNav } from '../components/AdminNav'
-import { Badge, Button, Card, ErrorText, Input, PageHeading } from '../ui'
+import { Badge, Button, Card, ErrorText, Input, PageHeading, Table, Td, Th } from '../ui'
 
 export function AdminUsers() {
   const [users, setUsers] = useState<User[]>([])
@@ -57,12 +57,12 @@ export function AdminUsers() {
             onChange={(e) => setPassword(e.target.value)}
             className="max-w-xs"
           />
-          <label className="flex items-center gap-2 text-sm text-slate-300">
+          <label className="flex items-center gap-2 text-sm text-neutral-300">
             <input
               type="checkbox"
               checked={admin}
               onChange={(e) => setAdmin(e.target.checked)}
-              className="accent-indigo-500"
+              className="accent-brand-500"
             />
             Administrator
           </label>
@@ -73,28 +73,46 @@ export function AdminUsers() {
         </form>
       </Card>
 
-      <div className="space-y-2">
+      <Table
+        head={
+          <tr>
+            <Th>Username</Th>
+            <Th>Role</Th>
+            <Th className="text-right">Actions</Th>
+          </tr>
+        }
+      >
         {users.map((user) =>
           editingId === user.id ? (
-            <EditUserRow key={user.id} user={user} onClose={() => setEditingId(null)} onSaved={reload} />
+            <tr key={user.id} className="bg-neutral-900/40">
+              <td colSpan={3} className="px-4 py-3">
+                <EditUserForm user={user} onClose={() => setEditingId(null)} onSaved={reload} />
+              </td>
+            </tr>
           ) : (
-            <Card key={user.id} className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-slate-100">{user.username}</span>
-                {user.admin && <Badge tone="violet">admin</Badge>}
-              </div>
-              <Button variant="ghost" onClick={() => setEditingId(user.id)}>
-                Edit
-              </Button>
-            </Card>
+            <tr key={user.id} className="hover:bg-neutral-900">
+              <Td className="font-medium text-neutral-100">{user.username}</Td>
+              <Td>
+                {user.admin ? (
+                  <Badge tone="violet">admin</Badge>
+                ) : (
+                  <span className="text-neutral-500">member</span>
+                )}
+              </Td>
+              <Td className="text-right">
+                <Button variant="ghost" onClick={() => setEditingId(user.id)}>
+                  Edit
+                </Button>
+              </Td>
+            </tr>
           ),
         )}
-      </div>
+      </Table>
     </div>
   )
 }
 
-function EditUserRow({
+function EditUserForm({
   user,
   onClose,
   onSaved,
@@ -130,34 +148,32 @@ function EditUserRow({
   }
 
   return (
-    <Card className="p-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="font-medium text-slate-100">{user.username}</span>
-        <Input
-          type="password"
-          placeholder="new password (leave blank to keep)"
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="max-w-xs"
+    <div className="flex flex-wrap items-center gap-3">
+      <span className="font-medium text-neutral-100">{user.username}</span>
+      <Input
+        type="password"
+        placeholder="new password (leave blank to keep)"
+        autoComplete="new-password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="max-w-xs"
+      />
+      <label className="flex items-center gap-2 text-sm text-neutral-300">
+        <input
+          type="checkbox"
+          checked={admin}
+          onChange={(e) => setAdmin(e.target.checked)}
+          className="accent-brand-500"
         />
-        <label className="flex items-center gap-2 text-sm text-slate-300">
-          <input
-            type="checkbox"
-            checked={admin}
-            onChange={(e) => setAdmin(e.target.checked)}
-            className="accent-indigo-500"
-          />
-          Administrator
-        </label>
-        <Button onClick={onSave} disabled={busy}>
-          Save
-        </Button>
-        <Button variant="ghost" onClick={onClose}>
-          Cancel
-        </Button>
-        <ErrorText>{error}</ErrorText>
-      </div>
-    </Card>
+        Administrator
+      </label>
+      <Button onClick={onSave} disabled={busy}>
+        Save
+      </Button>
+      <Button variant="ghost" onClick={onClose}>
+        Cancel
+      </Button>
+      <ErrorText>{error}</ErrorText>
+    </div>
   )
 }
