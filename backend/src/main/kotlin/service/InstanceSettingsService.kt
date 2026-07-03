@@ -7,11 +7,16 @@ import kotlinx.serialization.json.Json
 import java.io.File
 
 class InstanceSettingsService(dataPath: String) {
-
-    private val dir = File(dataPath, "instance").apply { mkdirs() }
-    private val settingsFile = File(dir, "settings.json")
-    private val iconFile = File(dir, "icon")
+    private val settingsFile = File(dataPath, "settings.json")
+    private val iconFile = File(dataPath, "icon")
     private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
+
+    init {
+        settingsFile.parentFile.mkdirs()
+        if (!settingsFile.exists()) {
+            store(Stored())
+        }
+    }
 
     @Serializable
     private data class Stored(

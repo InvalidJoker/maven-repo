@@ -1,39 +1,52 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { api, ApiError, type User } from '../api'
-import { AdminNav } from '../components/AdminNav'
-import { Badge, Button, Card, ErrorText, Input, PageHeading, Table, Td, Th } from '../ui'
+import { useEffect, useState, type FormEvent } from "react";
+import { api, ApiError, type User } from "../api";
+import { AdminNav } from "../components/AdminNav";
+import {
+  Badge,
+  Button,
+  Card,
+  ErrorText,
+  Input,
+  PageHeading,
+  Table,
+  Td,
+  Th,
+} from "../ui";
 
 export function AdminUsers() {
-  const [users, setUsers] = useState<User[]>([])
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [admin, setAdmin] = useState(false)
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [users, setUsers] = useState<User[]>([]);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [admin, setAdmin] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const reload = () => {
-    api.users().then(setUsers).catch(() => setError('Failed to load users'))
-  }
+    api
+      .users()
+      .then(setUsers)
+      .catch(() => setError("Failed to load users"));
+  };
 
-  useEffect(reload, [])
+  useEffect(reload, []);
 
   const onCreate = async (event: FormEvent) => {
-    event.preventDefault()
-    setBusy(true)
-    setError('')
+    event.preventDefault();
+    setBusy(true);
+    setError("");
     try {
-      await api.createUser(username.trim(), password, admin)
-      setUsername('')
-      setPassword('')
-      setAdmin(false)
-      reload()
+      await api.createUser(username.trim(), password, admin);
+      setUsername("");
+      setPassword("");
+      setAdmin(false);
+      reload();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to create user')
+      setError(err instanceof ApiError ? err.message : "Failed to create user");
     } finally {
-      setBusy(false)
+      setBusy(false);
     }
-  }
+  };
 
   return (
     <div>
@@ -86,7 +99,11 @@ export function AdminUsers() {
           editingId === user.id ? (
             <tr key={user.id} className="bg-neutral-900/40">
               <td colSpan={3} className="px-4 py-3">
-                <EditUserForm user={user} onClose={() => setEditingId(null)} onSaved={reload} />
+                <EditUserForm
+                  user={user}
+                  onClose={() => setEditingId(null)}
+                  onSaved={reload}
+                />
               </td>
             </tr>
           ) : (
@@ -96,7 +113,7 @@ export function AdminUsers() {
                 {user.admin ? (
                   <Badge tone="violet">admin</Badge>
                 ) : (
-                  <span className="text-neutral-500">member</span>
+                  <Badge tone="neutral">user</Badge>
                 )}
               </Td>
               <Td className="text-right">
@@ -109,7 +126,7 @@ export function AdminUsers() {
         )}
       </Table>
     </div>
-  )
+  );
 }
 
 function EditUserForm({
@@ -117,35 +134,35 @@ function EditUserForm({
   onClose,
   onSaved,
 }: {
-  user: User
-  onClose: () => void
-  onSaved: () => void
+  user: User;
+  onClose: () => void;
+  onSaved: () => void;
 }) {
-  const [admin, setAdmin] = useState(user.admin)
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
+  const [admin, setAdmin] = useState(user.admin);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const onSave = async () => {
-    setBusy(true)
-    setError('')
+    setBusy(true);
+    setError("");
     try {
-      const changes: { admin?: boolean; password?: string } = {}
-      if (admin !== user.admin) changes.admin = admin
-      if (password.length > 0) changes.password = password
+      const changes: { admin?: boolean; password?: string } = {};
+      if (admin !== user.admin) changes.admin = admin;
+      if (password.length > 0) changes.password = password;
       if (Object.keys(changes).length === 0) {
-        onClose()
-        return
+        onClose();
+        return;
       }
-      await api.updateUser(user.id, changes)
-      onSaved()
-      onClose()
+      await api.updateUser(user.id, changes);
+      onSaved();
+      onClose();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to update user')
+      setError(err instanceof ApiError ? err.message : "Failed to update user");
     } finally {
-      setBusy(false)
+      setBusy(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -175,5 +192,5 @@ function EditUserForm({
       </Button>
       <ErrorText>{error}</ErrorText>
     </div>
-  )
+  );
 }

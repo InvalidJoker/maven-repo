@@ -3,9 +3,7 @@ ktor:
     port: 8080
   application:
     modules:
-      - de.joker.HttpKt.configureHttp
-      - de.joker.SerializationKt.configureSerialization
-      - de.joker.KoinKt.configureKoin
+      - de.joker.ApplicationKt.configure
       - de.joker.DatabasesKt.configureDatabases
       - de.joker.AuthKt.configureAuth
       - de.joker.RoutingKt.configureRouting
@@ -29,7 +27,7 @@ database:
 
 instance:
   # Folder for instance settings (branding name + icon), stored as files, not in the database.
-  dataPath: "$DATA_PATH:./data"
+  dataPath: "$DATA_PATH:./data/instance"
 
 storage:
   # Selects the active storage backend: "local" (local file system) or "s3".
@@ -49,7 +47,6 @@ storage:
     accessKeyId: "$S3_ACCESS_KEY_ID:your-access-key-id"
     secretAccessKey: "$S3_SECRET_ACCESS_KEY:your-secret-access-key"
     # Custom S3 endpoint for S3-compatible stores (MinIO, R2, Backblaze, ...).
-    # Leave empty to use AWS S3 for the configured region.
     endpoint: "$S3_ENDPOINT:"
 
 auth:
@@ -58,10 +55,9 @@ auth:
     secret: "$SESSION_SECRET:change-me-to-a-long-random-secret-value"
     # Cookie lifetime in seconds (default 7 days).
     maxAgeSeconds: "$SESSION_MAX_AGE:604800"
-  # Admin user seeded on first boot when the users table is empty. The password is randomly
-  # generated and printed to the logs once — there is no password environment variable.
+
+  # Admin user seeded on first boot when the users table is empty.
   admin:
     username: "$ADMIN_USERNAME:admin"
-    # Set ADMIN_RESET_PASSWORD=true for one boot to regenerate and re-print the admin password
-    # (recovery if it was lost). Remove/disable it again afterwards.
+    # regenerate and re-print the admin password
     resetPassword: "$ADMIN_RESET_PASSWORD:false"

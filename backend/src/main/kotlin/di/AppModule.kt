@@ -25,7 +25,7 @@ fun appModule(config: ApplicationConfig) = module {
     single { StorageConfig.from(config) }
     single { PasswordHasher() }
     single {
-        InstanceSettingsService(config.propertyOrNull("instance.dataPath")?.getString() ?: "./data")
+        InstanceSettingsService(config.propertyOrNull("instance.dataPath")?.getString() ?: "./data/instance")
     }
 
     single<StorageBackend> {
