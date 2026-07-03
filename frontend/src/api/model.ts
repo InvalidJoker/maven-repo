@@ -74,7 +74,10 @@ export interface SearchResult {
   latestVersion: string;
 }
 
+export type AccentColor = "EMERALD" | "INDIGO" | "BLUE" | "VIOLET" | "ROSE" | "AMBER";
+
 export interface Instance {
   name: string;
   iconUrl: string | null;
+  accent: AccentColor;
 }

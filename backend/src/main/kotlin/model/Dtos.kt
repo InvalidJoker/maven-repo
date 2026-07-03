@@ -26,13 +26,23 @@ data class RepositoryPermissionDto(val username: String, val permission: Permiss
 data class UserRepositoryDto(val name: String, val private: Boolean, val permission: Permission)
 
 @Serializable
-data class InstanceSettings(val name: String, val iconUrl: String? = null)
+enum class AccentColor { EMERALD, INDIGO, BLUE, VIOLET, ROSE, AMBER }
+
+@Serializable
+data class InstanceSettings(
+    val name: String,
+    val iconUrl: String? = null,
+    val accent: AccentColor = AccentColor.EMERALD,
+)
 
 @Serializable
 data class UpdateInstanceRequest(val name: String)
 
 @Serializable
 data class SetIconUrlRequest(val url: String)
+
+@Serializable
+data class SetAccentRequest(val accent: AccentColor)
 
 @Serializable
 data class ScopeDto(val repository: String, val permission: Permission)

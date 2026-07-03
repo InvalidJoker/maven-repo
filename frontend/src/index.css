@@ -34,7 +34,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Tailwind v4 no longer sets this; restore the pointer cursor on clickable elements. */
 @layer base {
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),

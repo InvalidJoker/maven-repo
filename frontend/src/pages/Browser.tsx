@@ -77,7 +77,6 @@ export function Browser({ repo, path }: { repo: string; path: string }) {
       );
   }, [repo, path]);
 
-  // Debounced package search across the whole repository.
   useEffect(() => {
     const q = query.trim();
     if (q.length < 2) {
@@ -253,7 +252,9 @@ function SearchResults({
               {result.groupId}:
               <span className="font-medium">{result.artifactId}</span>
             </div>
-            <div className="truncate text-xs text-neutral-500">{result.path}</div>
+            <div className="truncate text-xs text-neutral-500">
+              {result.path}
+            </div>
           </div>
           <Badge tone="amber">{result.latestVersion}</Badge>
         </button>

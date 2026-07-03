@@ -11,6 +11,7 @@ import type {
   BrowseEntry,
   SearchResult,
   Instance,
+  AccentColor,
 } from "./model";
 
 export type {
@@ -26,6 +27,7 @@ export type {
   BrowseResponse,
   SearchResult,
   Instance,
+  AccentColor,
 };
 
 export class ApiError extends Error {
@@ -68,13 +70,11 @@ async function request<T>(
 }
 
 export const api = {
-  // auth
   me: () => request<User>("GET", "/auth/me"),
   login: (username: string, password: string) =>
     request<User>("POST", "/auth/login", { username, password }),
   logout: () => request<void>("POST", "/auth/logout"),
 
-  // repositories visible to the caller (public ones for anonymous visitors)
   visibleRepositories: () =>
     request<UserRepository[]>("GET", "/api/repositories"),
   browse: (repo: string, path: string) => {
@@ -153,6 +153,8 @@ export const api = {
     }
   },
   resetInstanceIcon: () => request<void>("DELETE", "/api/instance/icon"),
+  setInstanceAccent: (accent: AccentColor) =>
+    request<Instance>("PUT", "/api/instance/accent", { accent }),
 
   // users (admin)
   users: () => request<User[]>("GET", "/api/users"),

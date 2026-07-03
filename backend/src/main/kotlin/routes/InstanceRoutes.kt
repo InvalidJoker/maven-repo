@@ -1,6 +1,7 @@
 package de.joker.routes
 
 import de.joker.AUTH_ADMIN
+import de.joker.model.SetAccentRequest
 import de.joker.model.SetIconUrlRequest
 import de.joker.model.UpdateInstanceRequest
 import de.joker.service.InstanceSettingsService
@@ -66,6 +67,11 @@ fun Route.instanceRoutes(settings: InstanceSettingsService) {
 
             delete("/icon") {
                 settings.clearIcon()
+                call.respond(settings.settings())
+            }
+
+            put("/accent") {
+                settings.setAccent(call.receive<SetAccentRequest>().accent)
                 call.respond(settings.settings())
             }
         }
