@@ -4,10 +4,12 @@ import de.joker.di.appModule
 import io.ktor.server.application.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.*
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
+import org.slf4j.event.Level
 
 fun Application.configure() {
     install(CORS) {
@@ -26,5 +28,8 @@ fun Application.configure() {
     }
     install(ContentNegotiation) {
         json()
+    }
+    install(CallLogging) {
+        level = Level.INFO
     }
 }

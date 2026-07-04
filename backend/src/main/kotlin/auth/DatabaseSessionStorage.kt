@@ -13,6 +13,7 @@ import org.jetbrains.exposed.v1.r2dbc.upsert
 import java.util.concurrent.ConcurrentHashMap
 
 class DatabaseSessionStorage(private val db: DatabaseService) : SessionStorage {
+    val log = org.slf4j.LoggerFactory.getLogger(DatabaseSessionStorage::class.java)
 
     private val cache = ConcurrentHashMap<String, String>()
 
@@ -23,6 +24,8 @@ class DatabaseSessionStorage(private val db: DatabaseService) : SessionStorage {
                 .toList()
         }
         rows.forEach { (id, data) -> cache[id] = data }
+
+        log.info("Loaded ${rows.size} sessions into cache")
     }
 
     override suspend fun write(id: String, value: String) {
