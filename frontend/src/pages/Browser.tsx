@@ -8,6 +8,7 @@ import {
   Package,
   Search,
   Tag,
+  type LucideIcon,
 } from "lucide-react";
 import {
   api,
@@ -41,21 +42,20 @@ function formatSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function EntryIcon({ entry }: { entry: BrowseEntry }) {
-  if (entry.kind === "PACKAGE")
-    return <Package className="h-4 w-4 shrink-0 text-brand-400" />;
-  if (entry.kind === "VERSION")
-    return <Tag className="h-4 w-4 shrink-0 text-violet-400" />;
-  if (entry.directory)
-    return <Folder className="h-4 w-4 shrink-0 text-sky-400" />;
+function pickIcon(entry: BrowseEntry): [LucideIcon, string] {
+  if (entry.kind === "PACKAGE") return [Package, "text-brand-400"];
+  if (entry.kind === "VERSION") return [Tag, "text-violet-400"];
+  if (entry.directory) return [Folder, "text-sky-400"];
   const name = entry.name.toLowerCase();
-  if (/\.(jar|war|aar|zip|tar|gz|module)$/.test(name))
-    return <FileArchive className="h-4 w-4 shrink-0 text-amber-400" />;
-  if (/\.(pom|xml)$/.test(name))
-    return <FileCode className="h-4 w-4 shrink-0 text-sky-400" />;
-  if (/\.(md5|sha1|sha256|sha512|asc)$/.test(name))
-    return <Hash className="h-4 w-4 shrink-0 text-neutral-500" />;
-  return <FileIcon className="h-4 w-4 shrink-0 text-neutral-400" />;
+  if (/\.(jar|war|aar|zip|tar|gz|module)$/.test(name)) return [FileArchive, "text-amber-400"];
+  if (/\.(pom|xml)$/.test(name)) return [FileCode, "text-sky-400"];
+  if (/\.(md5|sha1|sha256|sha512|asc)$/.test(name)) return [Hash, "text-neutral-500"];
+  return [FileIcon, "text-neutral-400"];
+}
+
+function EntryIcon({ entry }: { entry: BrowseEntry }) {
+  const [Icon, color] = pickIcon(entry);
+  return <Icon size={16} className={`shrink-0 ${color}`} />;
 }
 
 export function Browser({ repo, path }: { repo: string; path: string }) {
@@ -99,7 +99,10 @@ export function Browser({ repo, path }: { repo: string; path: string }) {
       <Breadcrumb repo={repo} segs={segs} />
 
       <div className="relative mb-4">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -tranneutral-y-1/2 text-neutral-500" />
+        <Search
+          size={16}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"
+        />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -246,7 +249,7 @@ function SearchResults({
           onClick={() => onSelect(result.path)}
           className="flex w-full items-center gap-3 border-b border-neutral-800 px-3 py-2.5 text-left last:border-b-0 hover:bg-neutral-900"
         >
-          <Package className="h-4 w-4 shrink-0 text-brand-400" />
+          <Package size={16} className="shrink-0 text-brand-400" />
           <div className="min-w-0">
             <div className="truncate text-sm text-neutral-100">
               {result.groupId}:
