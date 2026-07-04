@@ -18,6 +18,7 @@ dependencies {
     implementation(ktorLibs.server.contentNegotiation)
     implementation(ktorLibs.server.core)
     implementation(ktorLibs.server.cors)
+    implementation(ktorLibs.server.forwardedHeader)
     implementation(ktorLibs.server.cio)
     implementation(ktorLibs.server.sessions)
     implementation(libs.bcrypt)
