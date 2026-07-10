@@ -3,7 +3,10 @@
 - Public and private repositories with per-user read/write grants
 - Access tokens for Gradle/Maven, scoped to specific repositories
 - Web UI to browse artifacts, search packages, and manage users, repos and tokens
-- H2 (embedded) or PostgreSQL; local filesystem or S3-compatible storage
+- H2 (embedded) or PostgreSQL database
+- Local filesystem or S3-compatible storage
+
+> Live demo: https://repo.koder.wtf/#/ (example repository: https://repo.koder.wtf/#/repo/releases)
 
 ## Install
 
