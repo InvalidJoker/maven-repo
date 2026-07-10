@@ -51,14 +51,14 @@ suspend fun Application.configureAuth() {
     when {
         // Seed the admin with a generated password.
         userService.count() == 0L -> {
-            val password = generatePassword()
+            val password = environment.config.propertyOrNull("admin.password")?.getString() ?: generatePassword()
             userService.createUser(authConfig.adminUsername, password, admin = true)
             logCredentials("Generated initial admin account", authConfig.adminUsername, password)
         }
 
         // ADMIN_RESET_PASSWORD=true regenerate admin password
         authConfig.adminResetPassword -> {
-            val password = generatePassword()
+            val password = environment.config.propertyOrNull("admin.password")?.getString() ?: generatePassword()
             val existing = userService.findByUsername(authConfig.adminUsername)
             if (existing != null) {
                 userService.update(existing.id, admin = true, password = password)

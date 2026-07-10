@@ -61,3 +61,5 @@ auth:
     username: "$ADMIN_USERNAME:admin"
     # regenerate and re-print the admin password
     resetPassword: "$ADMIN_RESET_PASSWORD:false"
+    # overwrite the admin password with this value (only used when resetPassword is true or first install)
+    password: ${ADMIN_PASSWORD:-}
