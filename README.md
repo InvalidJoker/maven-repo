@@ -62,21 +62,9 @@ All settings are optional environment variables.
 
 Data (H2 database, local artifacts, instance branding) is stored under `/app/data` — keep it on a volume.
 
-Behind a reverse proxy, forward `X-Forwarded-Proto` and `X-Forwarded-Host` so redirects and same-origin checks work.
-
 ## Usage
 
-```kotlin
-repositories {
-    maven {
-        url = uri("http://localhost:8080/maven/releases")
-        credentials {
-            username = "your-username"
-            password = "your-access-token"
-        }
-    }
-}
-```
+See [USAGE.md](USAGE.md) for setting up repositories, consuming artifacts, and publishing.
 
 ## Build from source
 
