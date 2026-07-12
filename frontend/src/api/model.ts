@@ -81,4 +81,6 @@ export interface Instance {
   iconUrl: string | null;
   accent: AccentColor;
   demo: boolean;
+  oidc: boolean;
+  oidcLabel: string | null;
 }

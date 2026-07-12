@@ -1,8 +1,10 @@
 package de.joker
 
 import de.joker.auth.DatabaseSessionStorage
+import de.joker.auth.OidcFlowSession
 import de.joker.auth.UserSession
 import de.joker.config.AuthConfig
+import de.joker.service.OidcService
 import de.joker.service.UserService
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -20,15 +22,25 @@ suspend fun Application.configureAuth() {
     val authConfig by inject<AuthConfig>()
     val userService by inject<UserService>()
     val sessionStorage by inject<DatabaseSessionStorage>()
+    val oidcService by inject<OidcService>()
 
     sessionStorage.loadAll()
+    oidcService.initialize()
+
+    val sessionSecret = authConfig.sessionSecret.toByteArray()
 
     install(Sessions) {
         cookie<UserSession>("user_session", sessionStorage) {
             cookie.path = "/"
             cookie.httpOnly = true
             cookie.maxAgeInSeconds = authConfig.sessionMaxAgeSeconds
-            transform(SessionTransportTransformerMessageAuthentication(authConfig.sessionSecret.toByteArray()))
+            transform(SessionTransportTransformerMessageAuthentication(sessionSecret))
+        }
+        cookie<OidcFlowSession>("oidc_flow") {
+            cookie.path = "/"
+            cookie.httpOnly = true
+            cookie.maxAgeInSeconds = 600
+            transform(SessionTransportTransformerMessageAuthentication(sessionSecret))
         }
     }
 

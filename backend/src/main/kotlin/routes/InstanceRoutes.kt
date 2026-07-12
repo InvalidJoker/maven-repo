@@ -5,6 +5,7 @@ import de.joker.model.SetAccentRequest
 import de.joker.model.SetIconUrlRequest
 import de.joker.model.UpdateInstanceRequest
 import de.joker.service.InstanceSettingsService
+import de.joker.service.OidcService
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -14,10 +15,15 @@ import io.ktor.server.routing.*
 
 private const val MAX_ICON_BYTES = 1024 * 1024
 
-fun Route.instanceRoutes(settings: InstanceSettingsService) {
+fun Route.instanceRoutes(settings: InstanceSettingsService, oidc: OidcService) {
     route("/instance") {
         get {
-            call.respond(settings.settings())
+            call.respond(
+                settings.settings().copy(
+                    oidc = oidc.enabled,
+                    oidcLabel = if (oidc.enabled) oidc.buttonLabel else null,
+                ),
+            )
         }
 
         get("/icon") {

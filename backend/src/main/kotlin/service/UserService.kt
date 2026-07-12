@@ -11,6 +11,8 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.update
+import java.security.SecureRandom
+import java.util.Base64
 
 class UserService(
     private val db: DatabaseService,
@@ -68,4 +70,14 @@ class UserService(
     }
 
     suspend fun count(): Long = db.query { UserTable.selectAll().count() }
+
+    suspend fun provisionOidcUser(username: String): UserDto {
+        val name = username.trim().take(64).ifEmpty { "user" }
+        return findByUsername(name) ?: createUser(name, randomPassword(), admin = false)
+    }
+
+    private fun randomPassword(): String {
+        val bytes = ByteArray(24).also { SecureRandom().nextBytes(it) }
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+    }
 }
