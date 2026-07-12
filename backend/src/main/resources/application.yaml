@@ -57,6 +57,15 @@ auth:
     # Cookie lifetime in seconds (default 7 days).
     maxAgeSeconds: "$SESSION_MAX_AGE:604800"
 
+  # OpenID Connect SSO (Authentik, Pocket ID, Keycloak, ...). Leave clientId blank to disable.
+  # Register the redirect URI <base-url>/auth/oidc/callback with your provider.
+  oidc:
+    issuer: "$OIDC_ISSUER:"
+    clientId: "$OIDC_CLIENT_ID:"
+    clientSecret: "$OIDC_CLIENT_SECRET:"
+    scopes: "$OIDC_SCOPES:openid profile email"
+    buttonLabel: "$OIDC_BUTTON_LABEL:Sign in with SSO"
+
   # Admin user seeded on first boot when the users table is empty.
   admin:
     username: "$ADMIN_USERNAME:admin"

@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { useAuth } from '../auth'
+import { useInstance } from '../instance'
 import { ApiError } from '../api'
 import { navigate } from '../router'
 import { Button, Card, ErrorText, Input } from '../ui'
 
 export function Login() {
   const { login } = useAuth()
+  const { oidc, oidcLabel } = useInstance()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -55,6 +57,25 @@ export function Login() {
             {busy ? 'Signing in…' : 'Sign in'}
           </Button>
         </form>
+
+        {oidc && (
+          <>
+            <div className="my-4 flex items-center gap-3 text-xs text-neutral-600">
+              <span className="h-px flex-1 bg-neutral-800" />
+              or
+              <span className="h-px flex-1 bg-neutral-800" />
+            </div>
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => {
+                window.location.href = '/auth/oidc/login'
+              }}
+            >
+              {oidcLabel ?? 'Sign in with SSO'}
+            </Button>
+          </>
+        )}
       </Card>
     </div>
   )

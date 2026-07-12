@@ -3,10 +3,13 @@ package de.joker
 import de.joker.auth.DatabaseSessionStorage
 import de.joker.auth.UserSession
 import de.joker.config.AuthConfig
+import de.joker.service.OidcService
 import de.joker.service.UserService
+import io.ktor.client.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
+import io.ktor.server.plugins.*
 import io.ktor.server.response.*
 import io.ktor.server.sessions.*
 import org.koin.ktor.ext.inject
@@ -15,13 +18,17 @@ import java.util.Base64
 
 const val AUTH_SESSION = "auth-session"
 const val AUTH_ADMIN = "auth-admin"
+const val AUTH_OIDC = "auth-oidc"
 
 suspend fun Application.configureAuth() {
     val authConfig by inject<AuthConfig>()
     val userService by inject<UserService>()
     val sessionStorage by inject<DatabaseSessionStorage>()
+    val oidcService by inject<OidcService>()
+    val httpClient by inject<HttpClient>()
 
     sessionStorage.loadAll()
+    oidcService.initialize()
 
     install(Sessions) {
         cookie<UserSession>("user_session", sessionStorage) {
@@ -46,6 +53,14 @@ suspend fun Application.configureAuth() {
                 call.respond(HttpStatusCode.Forbidden, mapOf("error" to "Administrator access required"))
             }
         }
+
+        if (oidcService.ready) {
+            oauth(AUTH_OIDC) {
+                urlProvider = { oidcCallbackUrl() }
+                providerLookup = { oidcService.serverSettings() }
+                client = httpClient
+            }
+        }
     }
 
     when {
@@ -68,6 +83,14 @@ suspend fun Application.configureAuth() {
             logCredentials("Reset admin password (ADMIN_RESET_PASSWORD)", authConfig.adminUsername, password)
         }
     }
+}
+
+/** Public callback URL, derived from the (proxy-aware) request origin. */
+private fun ApplicationCall.oidcCallbackUrl(): String {
+    val origin = request.origin
+    val defaultPort = if (origin.scheme == "https") 443 else 80
+    val port = if (origin.serverPort == defaultPort) "" else ":${origin.serverPort}"
+    return "${origin.scheme}://${origin.serverHost}$port/auth/oidc/callback"
 }
 
 private fun Application.logCredentials(title: String, username: String, password: String) {

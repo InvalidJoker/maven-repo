@@ -23,6 +23,8 @@ export function InstanceProvider({ children }: { children: ReactNode }) {
     iconUrl: null,
     accent: 'EMERALD',
     demo: false,
+    oidc: false,
+    oidcLabel: null,
   })
 
   const refresh = async () => {

@@ -34,6 +34,8 @@ data class InstanceSettings(
     val iconUrl: String? = null,
     val accent: AccentColor = AccentColor.EMERALD,
     val demo: Boolean = false,
+    val oidc: Boolean = false,
+    val oidcLabel: String? = null,
 )
 
 @Serializable
