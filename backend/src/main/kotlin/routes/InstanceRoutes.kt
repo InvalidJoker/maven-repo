@@ -20,8 +20,8 @@ fun Route.instanceRoutes(settings: InstanceSettingsService, oidc: OidcService) {
         get {
             call.respond(
                 settings.settings().copy(
-                    oidc = oidc.ready,
-                    oidcLabel = if (oidc.ready) oidc.buttonLabel else null,
+                    oidc = oidc.enabled,
+                    oidcLabel = if (oidc.enabled) oidc.buttonLabel else null,
                 ),
             )
         }

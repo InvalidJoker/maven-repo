@@ -40,7 +40,7 @@ fun Application.configureRouting() {
         authRoutes(userService)
         mavenRoutes(repositoryService, accessTokenService, accessControlService, storageService)
 
-        if (oidcService.ready) {
+        if (oidcService.enabled) {
             oidcRoutes(oidcService, userService)
         }
 
