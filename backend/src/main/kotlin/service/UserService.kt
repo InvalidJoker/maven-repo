@@ -71,10 +71,6 @@ class UserService(
 
     suspend fun count(): Long = db.query { UserTable.selectAll().count() }
 
-    /**
-     * Finds or creates the local user for an SSO login, matched by username. New users get a
-     * random unusable password (they authenticate via the identity provider, not a password).
-     */
     suspend fun provisionOidcUser(username: String): UserDto {
         val name = username.trim().take(64).ifEmpty { "user" }
         return findByUsername(name) ?: createUser(name, randomPassword(), admin = false)

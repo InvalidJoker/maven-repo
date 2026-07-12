@@ -13,10 +13,6 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
 
-/**
- * Manual OIDC authorization-code flow with PKCE (required by providers like Pocket ID). Mounted
- * only when a provider is configured; endpoints are discovered lazily on the login request.
- */
 fun Route.oidcRoutes(oidc: OidcService, users: UserService) {
     get("/auth/oidc/login") {
         if (!oidc.ensureDiscovered()) {
@@ -66,7 +62,6 @@ fun Route.oidcRoutes(oidc: OidcService, users: UserService) {
     }
 }
 
-/** Public callback URL, derived from the (proxy-aware) request origin. */
 private fun ApplicationCall.oidcCallbackUrl(): String {
     val origin = request.origin
     val defaultPort = if (origin.scheme == "https") 443 else 80

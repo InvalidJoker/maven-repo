@@ -2,10 +2,6 @@ package de.joker.config
 
 import io.ktor.server.config.*
 
-/**
- * OpenID Connect settings. [enabled] is true only when issuer, client id and secret are all set;
- * endpoints are discovered from the issuer's `.well-known/openid-configuration` at startup.
- */
 data class OidcConfig(
     val enabled: Boolean,
     val issuer: String,

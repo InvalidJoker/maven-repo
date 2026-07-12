@@ -36,7 +36,6 @@ suspend fun Application.configureAuth() {
             cookie.maxAgeInSeconds = authConfig.sessionMaxAgeSeconds
             transform(SessionTransportTransformerMessageAuthentication(sessionSecret))
         }
-        // Transient PKCE/state cookie for the OIDC login round-trip.
         cookie<OidcFlowSession>("oidc_flow") {
             cookie.path = "/"
             cookie.httpOnly = true

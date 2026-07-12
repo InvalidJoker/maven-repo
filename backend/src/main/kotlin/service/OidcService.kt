@@ -12,10 +12,6 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import org.slf4j.LoggerFactory
 
-/**
- * OpenID Connect helper: discovers provider endpoints from the issuer, exposes Ktor OAuth server
- * settings for the authorization-code flow, and resolves the authenticated user from userinfo.
- */
 class OidcService(private val config: OidcConfig, private val http: HttpClient) {
 
     private val log = LoggerFactory.getLogger(OidcService::class.java)
@@ -31,17 +27,14 @@ class OidcService(private val config: OidcConfig, private val http: HttpClient) 
     @Volatile
     private var metadata: Metadata? = null
 
-    /** Whether OIDC is configured (endpoints are discovered lazily, on demand). */
     val enabled: Boolean get() = config.enabled
 
     val buttonLabel: String get() = config.buttonLabel
 
-    /** Best-effort discovery at startup; failures are retried lazily on the next login. */
     suspend fun initialize() {
         if (config.enabled) discover()
     }
 
-    /** Ensures the provider endpoints are known, discovering on demand. Returns false if unavailable. */
     suspend fun ensureDiscovered(): Boolean {
         if (!config.enabled) return false
         if (metadata != null) return true
@@ -78,7 +71,6 @@ class OidcService(private val config: OidcConfig, private val http: HttpClient) 
         }.buildString()
     }
 
-    /** Exchanges an authorization code (with PKCE verifier) for an access token. */
     suspend fun exchangeCode(redirectUri: String, code: String, codeVerifier: String): String {
         val m = metadata ?: error("OIDC not initialized")
         val response = http.submitForm(
