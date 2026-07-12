@@ -22,6 +22,7 @@ export function InstanceProvider({ children }: { children: ReactNode }) {
     name: 'Maven Repository',
     iconUrl: null,
     accent: 'EMERALD',
+    demo: false,
   })
 
   const refresh = async () => {

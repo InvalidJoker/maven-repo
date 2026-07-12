@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { useAuth } from "./auth";
+import { useInstance } from "./instance";
 import { navigate, segments, useHashRoute } from "./router";
+import { DemoBanner } from "./components/DemoBanner";
 import { Layout } from "./components/Layout";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
@@ -57,13 +59,26 @@ function resolve(parts: string[], user: User | null): ReactNode {
 
 export default function App() {
   const { user, loading } = useAuth();
+  const { demo } = useInstance();
   const route = useHashRoute();
 
-  if (loading) return <Centered>Loading…</Centered>;
+  let content: ReactNode;
+  if (loading) {
+    content = <Centered>Loading…</Centered>;
+  } else {
+    const parts = segments(route);
+    content =
+      !user && parts[0] === "login" ? (
+        <Login />
+      ) : (
+        <Layout>{resolve(parts, user)}</Layout>
+      );
+  }
 
-  const parts = segments(route);
-
-  if (!user && parts[0] === "login") return <Login />;
-
-  return <Layout>{resolve(parts, user)}</Layout>;
+  return (
+    <div className="flex min-h-full flex-col">
+      {demo && <DemoBanner />}
+      <div className="flex-1">{content}</div>
+    </div>
+  );
 }

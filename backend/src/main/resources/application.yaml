@@ -28,6 +28,7 @@ database:
 instance:
   # Folder for instance settings (branding name + icon), stored as files, not in the database.
   dataPath: "$DATA_PATH:./data/instance"
+  demo: "$DEMO:false"
 
 storage:
   # Selects the active storage backend: "local" (local file system) or "s3".

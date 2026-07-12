@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
 
-class InstanceSettingsService(dataPath: String) {
+class InstanceSettingsService(dataPath: String, private val demo: Boolean = false) {
     private val settingsFile = File(dataPath, "settings.json")
     private val iconFile = File(dataPath, "icon")
     private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
@@ -42,7 +42,7 @@ class InstanceSettingsService(dataPath: String) {
             stored.iconContentType != null && iconFile.exists() -> "/api/instance/icon?v=${iconFile.lastModified()}"
             else -> null
         }
-        return InstanceSettings(stored.name, iconUrl, stored.accent)
+        return InstanceSettings(stored.name, iconUrl, stored.accent, demo)
     }
 
     @Synchronized
