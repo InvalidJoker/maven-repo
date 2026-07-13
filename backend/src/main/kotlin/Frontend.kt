@@ -18,10 +18,25 @@ fun Application.configureFrontend() {
             get("/") {
                 call.respondText(renderIndex(template, settings.settings()), ContentType.Text.Html)
             }
-            staticResources("/", "web")
+            staticResources("/", "web") { cacheControl(::staticCache) }
         } else {
-            staticResources("/", "web") { default("index.html") }
+            staticResources("/", "web") {
+                default("index.html")
+                cacheControl(::staticCache)
+            }
         }
+    }
+}
+
+/** Long cache for content-hashed Vite assets; a shorter one for the favicon and other statics. */
+private fun staticCache(resource: java.net.URL): List<CacheControl> {
+    val path = resource.path
+    return when {
+        "/assets/" in path ->
+            listOf(CacheControl.MaxAge(maxAgeSeconds = 31_536_000, visibility = CacheControl.Visibility.Public))
+        path.endsWith(".svg") || path.endsWith(".png") || path.endsWith(".ico") ->
+            listOf(CacheControl.MaxAge(maxAgeSeconds = 86_400, visibility = CacheControl.Visibility.Public))
+        else -> emptyList()
     }
 }
 

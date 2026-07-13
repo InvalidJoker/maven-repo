@@ -31,6 +31,8 @@ fun Route.instanceRoutes(settings: InstanceSettingsService, oidc: OidcService) {
             if (icon == null) {
                 call.respond(HttpStatusCode.NotFound)
             } else {
+                // The icon URL is content-versioned (?v=<mtime>), so a hit is safe to cache forever.
+                call.response.headers.append(HttpHeaders.CacheControl, "public, max-age=31536000, immutable")
                 call.respondBytes(icon.bytes, ContentType.parse(icon.contentType))
             }
         }
