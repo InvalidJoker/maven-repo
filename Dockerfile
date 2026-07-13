@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- Build stage: bundles the bun-built frontend into the backend shadow jar ----
-FROM eclipse-temurin:21-jdk-jammy AS build
+FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk-jammy AS build
 WORKDIR /app
 
 # Bun is required by the frontend Gradle build (frontend/build.gradle.kts).
