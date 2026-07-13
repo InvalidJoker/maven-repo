@@ -28,7 +28,7 @@ export function Login() {
   }
 
   return (
-    <div className="flex min-h-full items-center justify-center px-4">
+    <div className="flex flex-1 items-center justify-center px-4">
       <Card className="w-full max-w-sm p-6">
         <button
           onClick={() => navigate('/')}

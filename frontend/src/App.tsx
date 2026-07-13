@@ -78,7 +78,7 @@ export default function App() {
   return (
     <div className="flex min-h-full flex-col">
       {demo && <DemoBanner />}
-      <div className="flex-1">{content}</div>
+      <main className="flex flex-1 flex-col">{content}</main>
     </div>
   );
 }
