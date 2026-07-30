@@ -3,7 +3,10 @@ package de.joker
 import de.joker.di.appModule
 import io.ktor.server.application.*
 import io.ktor.http.*
+import io.ktor.http.content.OutgoingContent
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.request.httpMethod
+import io.ktor.server.response.ApplicationSendPipeline
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.*
@@ -37,5 +40,29 @@ fun Application.configure() {
     }
     install(CallLogging) {
         level = Level.INFO
+    }
+
+    stripHeadResponseBodies()
+}
+
+/**
+ * A HEAD response carries the headers of the GET it mirrors but never a body. Handlers that answer HEAD with an
+ * error payload would otherwise leave those bytes on the connection, which registry clients report as an
+ * unsolicited response and which corrupts keep-alive reuse.
+ */
+private fun Application.stripHeadResponseBodies() {
+    sendPipeline.intercept(ApplicationSendPipeline.After) { message ->
+        if (call.request.httpMethod != HttpMethod.Head) return@intercept
+        val content = message as? OutgoingContent ?: return@intercept
+        if (content is OutgoingContent.NoContent) return@intercept
+
+        proceedWith(
+            object : OutgoingContent.NoContent() {
+                override val status: HttpStatusCode? = content.status
+                override val contentType: ContentType? = content.contentType
+                override val contentLength: Long? = content.contentLength
+                override val headers: Headers = content.headers
+            },
+        )
     }
 }
