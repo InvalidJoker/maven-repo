@@ -6,7 +6,7 @@ import { DemoBanner } from "./components/DemoBanner";
 import { Layout } from "./components/Layout";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
-import { Browser } from "./pages/Browser";
+import { Repository } from "./pages/Repository";
 import { Tokens } from "./pages/Tokens";
 import { Admin } from "./pages/Admin";
 import { AdminUsers } from "./pages/AdminUsers";
@@ -36,7 +36,7 @@ function NeedsAuth() {
 
 function resolve(parts: string[], user: User | null): ReactNode {
   if (parts[0] === "repo" && parts[1]) {
-    return <Browser repo={parts[1]} path={parts.slice(2).join("/")} />;
+    return <Repository repo={parts[1]} parts={parts.slice(2)} />;
   }
 
   if (parts[0] === "tokens") {

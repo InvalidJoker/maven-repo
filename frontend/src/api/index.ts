@@ -140,10 +140,11 @@ export const api = {
 
   // repositories (admin)
   repositories: () => request<Repository[]>("GET", "/api/repositories"),
-  createRepository: (name: string, isPrivate: boolean) =>
+  createRepository: (name: string, isPrivate: boolean, type: RepositoryType) =>
     request<Repository>("POST", "/api/repositories", {
       name,
       private: isPrivate,
+      type,
     }),
   permissions: (repo: string) =>
     request<RepositoryPermission[]>(

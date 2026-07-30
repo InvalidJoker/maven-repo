@@ -1,7 +1,4 @@
-import { useState } from 'react'
-import { CopyButton } from './CopyButton'
-
-type Tab = 'kts' | 'groovy' | 'maven'
+import { CodeTabs } from './CodeTabs'
 
 export interface Coordinates {
   groupId: string
@@ -14,12 +11,6 @@ interface InstallSnippetProps {
   username?: string
   coordinates?: Coordinates
 }
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'kts', label: 'Gradle Kotlin' },
-  { id: 'groovy', label: 'Gradle Groovy' },
-  { id: 'maven', label: 'Maven' },
-]
 
 function gradleKts(repoUrl: string, user: string, c?: Coordinates): string {
   const repo = `repositories {
@@ -93,37 +84,15 @@ function maven(repoUrl: string, user: string, c?: Coordinates): string {
 }
 
 export function InstallSnippet({ repoUrl, username, coordinates }: InstallSnippetProps) {
-  const [tab, setTab] = useState<Tab>('kts')
   const user = username ?? '<your-username>'
 
-  const code =
-    tab === 'kts'
-      ? gradleKts(repoUrl, user, coordinates)
-      : tab === 'groovy'
-        ? gradleGroovy(repoUrl, user, coordinates)
-        : maven(repoUrl, user, coordinates)
-
   return (
-    <div>
-      <div className="mb-2 flex gap-1">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`rounded px-2 py-1 text-xs transition-colors ${
-              tab === t.id ? 'bg-brand-500 text-white' : 'text-neutral-400 hover:bg-neutral-800'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-      <div className="relative">
-        <CopyButton text={code} />
-        <pre className="overflow-x-auto rounded-md border border-neutral-800 bg-neutral-950 p-4 pr-12 text-xs leading-relaxed text-neutral-300">
-          {code}
-        </pre>
-      </div>
-    </div>
+    <CodeTabs
+      tabs={[
+        { id: 'kts', label: 'Gradle Kotlin', code: gradleKts(repoUrl, user, coordinates) },
+        { id: 'groovy', label: 'Gradle Groovy', code: gradleGroovy(repoUrl, user, coordinates) },
+        { id: 'maven', label: 'Maven', code: maven(repoUrl, user, coordinates) },
+      ]}
+    />
   )
 }

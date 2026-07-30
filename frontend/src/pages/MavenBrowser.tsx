@@ -18,8 +18,10 @@ import {
   type SearchResult,
 } from "../api";
 import { useAuth } from "../auth";
+import { formatSize } from "../format";
 import { navigate } from "../router";
 import { Badge, Card } from "../ui";
+import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 import { InstallSnippet } from "../components/InstallSnippet";
 
 function pathSegments(path: string): string[] {
@@ -33,13 +35,6 @@ function repoHref(repo: string, segs: string[]): string {
 function downloadUrl(repo: string, segs: string[], name: string): string {
   const encoded = [repo, ...segs, name].map(encodeURIComponent).join("/");
   return `${window.location.origin}/maven/${encoded}`;
-}
-
-function formatSize(bytes: number | null): string {
-  if (bytes == null) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function pickIcon(entry: BrowseEntry): [LucideIcon, string] {
@@ -58,7 +53,7 @@ function EntryIcon({ entry }: { entry: BrowseEntry }) {
   return <Icon size={16} className={`shrink-0 ${color}`} />;
 }
 
-export function Browser({ repo, path }: { repo: string; path: string }) {
+export function MavenBrowser({ repo, path }: { repo: string; path: string }) {
   const { user } = useAuth();
   const [data, setData] = useState<BrowseResponse | null>(null);
   const [error, setError] = useState("");
@@ -94,9 +89,21 @@ export function Browser({ repo, path }: { repo: string; path: string }) {
 
   const repoUrl = `${window.location.origin}/maven/${repo}`;
 
+  const crumbs: Crumb[] = [
+    { label: "repositories", href: "/" },
+    { label: repo, href: segs.length === 0 ? undefined : repoHref(repo, []) },
+    ...segs.map((seg, index) => ({
+      label: seg,
+      href:
+        index === segs.length - 1
+          ? undefined
+          : repoHref(repo, segs.slice(0, index + 1)),
+    })),
+  ];
+
   return (
     <div>
-      <Breadcrumb repo={repo} segs={segs} />
+      <Breadcrumb items={crumbs} />
 
       <div className="relative mb-4">
         <Search
@@ -268,50 +275,4 @@ function SearchResults({
 
 function PanelTitle({ children }: { children: ReactNode }) {
   return <h2 className="text-sm font-semibold text-neutral-200">{children}</h2>;
-}
-
-function Breadcrumb({ repo, segs }: { repo: string; segs: string[] }) {
-  return (
-    <div className="mb-6">
-      <div className="flex flex-wrap items-center gap-1 text-sm">
-        <button
-          onClick={() => navigate("/")}
-          className="text-neutral-500 hover:text-neutral-300"
-        >
-          repositories
-        </button>
-        <span className="text-neutral-700">/</span>
-        <button
-          onClick={() => navigate(repoHref(repo, []))}
-          className={
-            segs.length === 0
-              ? "text-neutral-100"
-              : "text-neutral-400 hover:text-neutral-200"
-          }
-        >
-          {repo}
-        </button>
-        {segs.map((seg, index) => {
-          const isLast = index === segs.length - 1;
-          return (
-            <span key={index} className="flex items-center gap-1">
-              <span className="text-neutral-700">/</span>
-              <button
-                onClick={() =>
-                  navigate(repoHref(repo, segs.slice(0, index + 1)))
-                }
-                className={
-                  isLast
-                    ? "text-neutral-100"
-                    : "text-neutral-400 hover:text-neutral-200"
-                }
-              >
-                {seg}
-              </button>
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
 }
