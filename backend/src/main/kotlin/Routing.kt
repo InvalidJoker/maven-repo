@@ -1,6 +1,9 @@
 package de.joker
 
+import de.joker.auth.RepositoryAccess
 import de.joker.routes.authRoutes
+import de.joker.routes.dockerBrowseRoutes
+import de.joker.routes.dockerRegistryRoutes
 import de.joker.routes.mavenRoutes
 import de.joker.routes.repositoryAdminRoutes
 import de.joker.routes.repositoryBrowseRoutes
@@ -8,12 +11,14 @@ import de.joker.routes.instanceRoutes
 import de.joker.routes.oidcRoutes
 import de.joker.routes.tokenRoutes
 import de.joker.routes.userAdminRoutes
-import de.joker.service.AccessControlService
 import de.joker.service.AccessTokenService
 import de.joker.service.InstanceSettingsService
+import de.joker.service.MavenBrowserService
 import de.joker.service.OidcService
-import de.joker.service.RepositoryBrowserService
 import de.joker.service.RepositoryService
+import de.joker.service.docker.BlobUploadSessions
+import de.joker.service.docker.DockerBrowserService
+import de.joker.service.docker.DockerRegistryService
 import de.joker.service.storage.StorageBackend
 import de.joker.service.UserService
 import io.ktor.http.*
@@ -26,9 +31,12 @@ fun Application.configureRouting() {
     val userService by inject<UserService>()
     val repositoryService by inject<RepositoryService>()
     val accessTokenService by inject<AccessTokenService>()
-    val accessControlService by inject<AccessControlService>()
+    val repositoryAccess by inject<RepositoryAccess>()
     val storageService by inject<StorageBackend>()
-    val browserService by inject<RepositoryBrowserService>()
+    val mavenBrowser by inject<MavenBrowserService>()
+    val dockerRegistry by inject<DockerRegistryService>()
+    val dockerBrowser by inject<DockerBrowserService>()
+    val blobUploads by inject<BlobUploadSessions>()
     val instanceSettings by inject<InstanceSettingsService>()
     val oidcService by inject<OidcService>()
 
@@ -38,7 +46,8 @@ fun Application.configureRouting() {
         }
 
         authRoutes(userService)
-        mavenRoutes(repositoryService, accessTokenService, accessControlService, storageService)
+        mavenRoutes(repositoryAccess, storageService)
+        dockerRegistryRoutes(repositoryAccess, dockerRegistry, blobUploads, dockerBrowser)
 
         if (oidcService.enabled) {
             oidcRoutes(oidcService, userService)
@@ -46,7 +55,8 @@ fun Application.configureRouting() {
 
         route("/api") {
             instanceRoutes(instanceSettings, oidcService)
-            repositoryBrowseRoutes(repositoryService, browserService, accessControlService)
+            repositoryBrowseRoutes(repositoryService, mavenBrowser, repositoryAccess)
+            dockerBrowseRoutes(repositoryAccess, dockerBrowser, dockerRegistry)
             repositoryAdminRoutes(repositoryService, userService)
             userAdminRoutes(userService)
             tokenRoutes(accessTokenService, repositoryService)

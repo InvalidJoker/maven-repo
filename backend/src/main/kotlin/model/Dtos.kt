@@ -4,11 +4,19 @@ import de.joker.auth.Permission
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/** Artifact format a repository holds. Maven artifacts and OCI/Docker images use different layouts and protocols. */
 @Serializable
-data class RepositoryDto(val id: Int, val name: String, val private: Boolean)
+enum class RepositoryType { MAVEN, DOCKER }
 
 @Serializable
-data class CreateRepositoryRequest(val name: String, val private: Boolean = false)
+data class RepositoryDto(val id: Int, val name: String, val private: Boolean, val type: RepositoryType)
+
+@Serializable
+data class CreateRepositoryRequest(
+    val name: String,
+    val private: Boolean = false,
+    val type: RepositoryType = RepositoryType.MAVEN,
+)
 
 @Serializable
 data class GrantPermissionRequest(val username: String, val permission: Permission)
@@ -23,7 +31,12 @@ data class UpdateUserRequest(val admin: Boolean? = null, val password: String? =
 data class RepositoryPermissionDto(val username: String, val permission: Permission)
 
 @Serializable
-data class UserRepositoryDto(val name: String, val private: Boolean, val permission: Permission)
+data class UserRepositoryDto(
+    val name: String,
+    val private: Boolean,
+    val permission: Permission,
+    val type: RepositoryType,
+)
 
 @Serializable
 enum class AccentColor { EMERALD, INDIGO, BLUE, VIOLET, ROSE, AMBER }
@@ -104,4 +117,37 @@ data class BrowseResponse(
     val entries: List<BrowseEntry>,
     val artifact: ArtifactInfo? = null,
     val version: VersionInfo? = null,
+)
+
+@Serializable
+data class DockerImageDto(val name: String, val tags: Int, val lastPushed: String? = null)
+
+@Serializable
+data class DockerTagDto(val tag: String, val digest: String? = null, val pushedAt: String? = null)
+
+@Serializable
+data class DockerLayerDto(val digest: String, val size: Long, val mediaType: String)
+
+@Serializable
+data class DockerPlatformDto(
+    val digest: String,
+    val os: String? = null,
+    val architecture: String? = null,
+    val variant: String? = null,
+)
+
+@Serializable
+data class DockerManifestDto(
+    val image: String,
+    val reference: String,
+    val digest: String,
+    val mediaType: String,
+    val manifestSize: Long,
+    val totalSize: Long,
+    val created: String? = null,
+    val os: String? = null,
+    val architecture: String? = null,
+    val layers: List<DockerLayerDto> = emptyList(),
+    val platforms: List<DockerPlatformDto> = emptyList(),
+    val labels: Map<String, String> = emptyMap(),
 )

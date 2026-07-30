@@ -34,6 +34,9 @@ storage:
   # Selects the active storage backend: "local" (local file system) or "s3".
   type: "$STORAGE_TYPE:local"
 
+  # Scratch space for in-flight Docker blob uploads, which are only handed to the backend once complete.
+  uploadPath: "$UPLOAD_PATH:./data/uploads"
+
   # Used when type = local. Path is relative to the working directory.
   local:
     # Filesystem location where artifacts are stored, one subdirectory per repository.

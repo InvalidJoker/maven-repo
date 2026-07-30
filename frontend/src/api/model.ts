@@ -1,5 +1,7 @@
 export type Permission = "READ" | "WRITE";
 
+export type RepositoryType = "MAVEN" | "DOCKER";
+
 export interface User {
   id: number;
   username: string;
@@ -10,12 +12,14 @@ export interface Repository {
   id: number;
   name: string;
   private: boolean;
+  type: RepositoryType;
 }
 
 export interface UserRepository {
   name: string;
   private: boolean;
   permission: Permission;
+  type: RepositoryType;
 }
 
 export interface RepositoryPermission {
@@ -72,6 +76,46 @@ export interface SearchResult {
   groupId: string;
   artifactId: string;
   latestVersion: string;
+}
+
+export interface DockerImage {
+  name: string;
+  tags: number;
+  lastPushed: string | null;
+}
+
+export interface DockerTag {
+  tag: string;
+  digest: string | null;
+  pushedAt: string | null;
+}
+
+export interface DockerLayer {
+  digest: string;
+  size: number;
+  mediaType: string;
+}
+
+export interface DockerPlatform {
+  digest: string;
+  os: string | null;
+  architecture: string | null;
+  variant: string | null;
+}
+
+export interface DockerManifest {
+  image: string;
+  reference: string;
+  digest: string;
+  mediaType: string;
+  manifestSize: number;
+  totalSize: number;
+  created: string | null;
+  os: string | null;
+  architecture: string | null;
+  layers: DockerLayer[];
+  platforms: DockerPlatform[];
+  labels: Record<string, string>;
 }
 
 export type AccentColor = "EMERALD" | "INDIGO" | "BLUE" | "VIOLET" | "ROSE" | "AMBER";

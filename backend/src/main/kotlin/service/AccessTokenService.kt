@@ -1,6 +1,6 @@
 package de.joker.service
 
-import de.joker.auth.MavenPrincipal
+import de.joker.auth.RegistryPrincipal
 import de.joker.auth.Permission
 import de.joker.database.AccessTokenScopeTable
 import de.joker.database.AccessTokenTable
@@ -78,11 +78,11 @@ class AccessTokenService(private val db: DatabaseService) {
         } > 0
     }
 
-    suspend fun verify(username: String, rawToken: String): MavenPrincipal? = db.query {
+    suspend fun verify(username: String, rawToken: String): RegistryPrincipal? = db.query {
         val hashed = hash(rawToken)
         (AccessTokenTable innerJoin UserTable).selectAll()
             .where { (UserTable.username eq username) and (AccessTokenTable.tokenHash eq hashed) }
-            .map { MavenPrincipal(it[UserTable.id].value, it[UserTable.admin], it[AccessTokenTable.id].value) }
+            .map { RegistryPrincipal(it[UserTable.id].value, it[UserTable.admin], it[AccessTokenTable.id].value) }
             .singleOrNull()
     }
 

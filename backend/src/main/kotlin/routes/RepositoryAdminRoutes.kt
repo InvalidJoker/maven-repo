@@ -3,6 +3,7 @@ package de.joker.routes
 import de.joker.AUTH_ADMIN
 import de.joker.model.CreateRepositoryRequest
 import de.joker.model.GrantPermissionRequest
+import de.joker.model.RepositoryType
 import de.joker.service.RepositoryService
 import de.joker.service.UserService
 import io.ktor.http.*
@@ -11,6 +12,8 @@ import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+
+private val REPOSITORY_NAME = Regex("[A-Za-z0-9][A-Za-z0-9._-]{0,63}")
 
 fun Route.repositoryAdminRoutes(repositories: RepositoryService, users: UserService) {
     authenticate(AUTH_ADMIN) {
@@ -21,11 +24,18 @@ fun Route.repositoryAdminRoutes(repositories: RepositoryService, users: UserServ
 
             post {
                 val request = call.receive<CreateRepositoryRequest>()
-                if (repositories.findByName(request.name) != null) {
+                val name = request.name.trim()
+                // Docker repository names become the first segment of an image reference, which the OCI spec
+                // restricts to lowercase.
+                if (!REPOSITORY_NAME.matches(name) || (request.type == RepositoryType.DOCKER && name != name.lowercase())) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid repository name"))
+                    return@post
+                }
+                if (repositories.findByName(name) != null) {
                     call.respond(HttpStatusCode.Conflict, mapOf("error" to "Repository already exists"))
                     return@post
                 }
-                call.respond(HttpStatusCode.Created, repositories.create(request.name, request.private))
+                call.respond(HttpStatusCode.Created, repositories.create(name, request.private, request.type))
             }
 
             route("/{repo}/permissions") {

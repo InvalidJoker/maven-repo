@@ -7,6 +7,7 @@ import de.joker.database.RepositoryTable
 import de.joker.database.UserTable
 import de.joker.model.RepositoryDto
 import de.joker.model.RepositoryPermissionDto
+import de.joker.model.RepositoryType
 import de.joker.model.ScopeDto
 import de.joker.model.UserRepositoryDto
 import kotlinx.coroutines.flow.map
@@ -24,12 +25,13 @@ data class ResolvedScope(val repoId: Int, val repoName: String, val permission: 
 
 class RepositoryService(private val db: DatabaseService) {
 
-    suspend fun create(name: String, private: Boolean): RepositoryDto = db.query {
+    suspend fun create(name: String, private: Boolean, type: RepositoryType): RepositoryDto = db.query {
         val row = RepositoryTable.insert {
             it[RepositoryTable.name] = name
             it[RepositoryTable.private] = private
+            it[RepositoryTable.type] = type
         }
-        RepositoryDto(row[RepositoryTable.id].value, name, private)
+        RepositoryDto(row[RepositoryTable.id].value, name, private, type)
     }
 
     suspend fun list(): List<RepositoryDto> = db.query {
@@ -83,17 +85,15 @@ class RepositoryService(private val db: DatabaseService) {
     suspend fun listPublic(): List<UserRepositoryDto> = db.query {
         RepositoryTable.selectAll()
             .where { RepositoryTable.private eq false }
-            .map { UserRepositoryDto(it[RepositoryTable.name], false, Permission.READ) }
+            .map { UserRepositoryDto(it[RepositoryTable.name], false, Permission.READ, it[RepositoryTable.type]) }
             .toList()
     }
 
     suspend fun listForUser(userId: Int, admin: Boolean): List<UserRepositoryDto> = db.query {
-        val repos = RepositoryTable.selectAll()
-            .map { Triple(it[RepositoryTable.id].value, it[RepositoryTable.name], it[RepositoryTable.private]) }
-            .toList()
+        val repos = RepositoryTable.selectAll().map { it.toRepositoryDto() }.toList()
 
         if (admin) {
-            repos.map { (_, name, private) -> UserRepositoryDto(name, private, Permission.WRITE) }
+            repos.map { UserRepositoryDto(it.name, it.private, Permission.WRITE, it.type) }
         } else {
             val grants = RepositoryPermissionTable.selectAll()
                 .where { RepositoryPermissionTable.user eq userId }
@@ -101,9 +101,9 @@ class RepositoryService(private val db: DatabaseService) {
                 .toList()
                 .toMap()
 
-            repos.mapNotNull { (id, name, private) ->
-                val permission = grants[id] ?: Permission.READ.takeUnless { private }
-                permission?.let { UserRepositoryDto(name, private, it) }
+            repos.mapNotNull { repo ->
+                val permission = grants[repo.id] ?: Permission.READ.takeUnless { repo.private }
+                permission?.let { UserRepositoryDto(repo.name, repo.private, it, repo.type) }
             }
         }
     }
@@ -121,5 +121,6 @@ class RepositoryService(private val db: DatabaseService) {
         id = this[RepositoryTable.id].value,
         name = this[RepositoryTable.name],
         private = this[RepositoryTable.private],
+        type = this[RepositoryTable.type],
     )
 }

@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
-import type { Permission } from './api'
+import type { Permission, RepositoryType } from './api'
 
 type Variant = 'primary' | 'ghost' | 'danger'
 
@@ -62,6 +62,10 @@ export function PermissionBadge({ permission }: { permission: Permission }) {
 
 export function VisibilityBadge({ isPrivate }: { isPrivate: boolean }) {
   return <Badge tone={isPrivate ? 'violet' : 'green'}>{isPrivate ? 'private' : 'public'}</Badge>
+}
+
+export function TypeBadge({ type }: { type: RepositoryType }) {
+  return <Badge tone={type === 'DOCKER' ? 'sky' : 'neutral'}>{type.toLowerCase()}</Badge>
 }
 
 export function Table({ head, children }: { head: ReactNode; children: ReactNode }) {

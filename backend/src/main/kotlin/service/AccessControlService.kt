@@ -1,13 +1,13 @@
 package de.joker.service
 
-import de.joker.auth.MavenPrincipal
+import de.joker.auth.RegistryPrincipal
 import de.joker.auth.Permission
 
 class AccessControlService(
     private val repositories: RepositoryService,
     private val tokens: AccessTokenService,
 ) {
-    suspend fun effectivePermission(principal: MavenPrincipal, repoId: Int): Permission? {
+    suspend fun effectivePermission(principal: RegistryPrincipal, repoId: Int): Permission? {
         if (principal.admin) return Permission.WRITE
 
         val userPermission = repositories.userPermission(principal.userId, repoId) ?: return null

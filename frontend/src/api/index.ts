@@ -1,6 +1,7 @@
 import type {
   Permission,
   Repository,
+  RepositoryType,
   User,
   UserRepository,
   RepositoryPermission,
@@ -10,6 +11,11 @@ import type {
   BrowseResponse,
   BrowseEntry,
   SearchResult,
+  DockerImage,
+  DockerTag,
+  DockerLayer,
+  DockerPlatform,
+  DockerManifest,
   Instance,
   AccentColor,
 } from "./model";
@@ -18,6 +24,7 @@ export type {
   Permission,
   BrowseEntry,
   Repository,
+  RepositoryType,
   User,
   UserRepository,
   RepositoryPermission,
@@ -26,6 +33,11 @@ export type {
   CreatedToken,
   BrowseResponse,
   SearchResult,
+  DockerImage,
+  DockerTag,
+  DockerLayer,
+  DockerPlatform,
+  DockerManifest,
   Instance,
   AccentColor,
 };
@@ -69,6 +81,10 @@ async function request<T>(
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
+function dockerBase(repo: string): string {
+  return `/api/repositories/${encodeURIComponent(repo)}/docker`;
+}
+
 export const api = {
   me: () => request<User>("GET", "/auth/me"),
   login: (username: string, password: string) =>
@@ -77,6 +93,8 @@ export const api = {
 
   visibleRepositories: () =>
     request<UserRepository[]>("GET", "/api/repositories"),
+  repository: (repo: string) =>
+    request<UserRepository>("GET", `/api/repositories/${encodeURIComponent(repo)}`),
   browse: (repo: string, path: string) => {
     const encoded = path
       .split("/")
@@ -93,6 +111,24 @@ export const api = {
       "GET",
       `/api/repositories/${encodeURIComponent(repo)}/search?q=${encodeURIComponent(query)}`,
     ),
+
+  // docker repositories
+  dockerImages: (repo: string) =>
+    request<DockerImage[]>("GET", `${dockerBase(repo)}/images`),
+  dockerTags: (repo: string, image: string) =>
+    request<DockerTag[]>("GET", `${dockerBase(repo)}/tags?image=${encodeURIComponent(image)}`),
+  dockerManifest: (repo: string, image: string, reference: string) =>
+    request<DockerManifest>(
+      "GET",
+      `${dockerBase(repo)}/manifest?image=${encodeURIComponent(image)}&reference=${encodeURIComponent(reference)}`,
+    ),
+  deleteDockerTag: (repo: string, image: string, tag: string) =>
+    request<void>(
+      "DELETE",
+      `${dockerBase(repo)}/tags?image=${encodeURIComponent(image)}&tag=${encodeURIComponent(tag)}`,
+    ),
+  deleteDockerImage: (repo: string, image: string) =>
+    request<void>("DELETE", `${dockerBase(repo)}/images?image=${encodeURIComponent(image)}`),
 
   // tokens (current user)
   tokens: () => request<Token[]>("GET", "/api/tokens"),
