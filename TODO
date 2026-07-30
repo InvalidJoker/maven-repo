@@ -1,6 +1,7 @@
 - rename to artifact repository (not maven only)
-    - support docker images
+    - [x] support docker images
     - support mirroring maven central f.e.
+    - docker: garbage-collect blobs that no manifest references anymore
 
 - admin portal with setup
  - set repo name

@@ -4,9 +4,10 @@
 > This is self-hosted software. There is **no public/hosted instance** — you must run your own (see [Install](#install)).
 > The `repo.koder.wtf` links in the docs are a personal demo you can read from, but not publish to.
 
+- Maven repositories **and** Docker/OCI registries in one instance, sharing users, permissions and tokens
 - Public and private repositories with per-user read/write grants
-- Access tokens for Gradle/Maven, scoped to specific repositories
-- Web UI to browse artifacts, search packages, and manage users, repos and tokens
+- Access tokens for Gradle/Maven and `docker login`, scoped to specific repositories
+- Web UI to browse artifacts, search packages, inspect images and tags, and manage users, repos and tokens
 - H2 (embedded) or PostgreSQL database
 - Local filesystem or S3-compatible storage
 
@@ -84,6 +85,7 @@ All settings are optional environment variables.
 | --- | --- | --- |
 | `STORAGE_TYPE` | `local` | `local` (data volume) or `s3`. |
 | `STORAGE_PATH` | `./data/repositories` | Artifact directory (used when `STORAGE_TYPE=local`). |
+| `UPLOAD_PATH` | `./data/uploads` | Scratch space for in-flight Docker layer uploads. Cleared on boot. |
 | `S3_BUCKET` / `S3_REGION` / `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | | S3 storage settings. |
 | `S3_ENDPOINT` | (AWS) | Custom endpoint for S3-compatible stores (MinIO, R2, Backblaze). |
 
