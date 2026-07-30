@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import java.io.InputStream
 
 private const val DOCKER_CONTENT_DIGEST = "Docker-Content-Digest"
@@ -174,7 +175,7 @@ private class DockerRegistryApi(
         }
 
         val issued = access.issueToken(principal)
-        call.respond(
+        call.respondOci(
             TokenResponse(
                 token = issued.token,
                 accessToken = issued.token,
@@ -186,14 +187,14 @@ private class DockerRegistryApi(
 
     private suspend fun catalog(call: ApplicationCall) {
         val repositories = access.readable(call, RepositoryType.DOCKER).map { it.name }
-        call.respond(CatalogResponse(browser.catalog(repositories)))
+        call.respondOci(CatalogResponse(browser.catalog(repositories)))
     }
 
     private suspend fun tagList(call: ApplicationCall, target: Target.Tags) {
         val repo = authorize(call, target.name, Permission.READ) ?: return
         val tags = registry.listTags(repo.name, target.name.image)
         val limit = call.request.queryParameters["n"]?.toIntOrNull()
-        call.respond(TagListResponse(target.name.toString(), if (limit != null) tags.take(limit) else tags))
+        call.respondOci(TagListResponse(target.name.toString(), if (limit != null) tags.take(limit) else tags))
     }
 
     private suspend fun getManifest(call: ApplicationCall, target: Target.Manifest, body: Boolean) {
@@ -454,7 +455,18 @@ private suspend fun ApplicationCall.unsupported() =
 
 private suspend fun ApplicationCall.ociError(status: HttpStatusCode, code: String, message: String) {
     response.header(API_VERSION, "registry/2.0")
-    respond(status, OciErrorResponse(listOf(OciErrorDetail(code, message))))
+    respondOci(OciErrorResponse(listOf(OciErrorDetail(code, message))), status)
+}
+
+/**
+ * Registry clients send an `Accept` header listing only manifest media types, which content negotiation answers
+ * with `406` — including for error bodies, hiding the actual failure. Registry JSON is therefore written directly.
+ */
+private suspend inline fun <reified T> ApplicationCall.respondOci(
+    value: T,
+    status: HttpStatusCode = HttpStatusCode.OK,
+) {
+    respondText(Json.encodeToString(value), ContentType.Application.Json, status)
 }
 
 /** Reads at most [limit] bytes, or null when the body is larger. */
