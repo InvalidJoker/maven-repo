@@ -16,6 +16,10 @@ import type {
   DockerLayer,
   DockerPlatform,
   DockerManifest,
+  NpmPackage,
+  NpmVersion,
+  NpmPackageDetail,
+  NpmVersionDetail,
   Instance,
   AccentColor,
 } from "./model";
@@ -38,6 +42,10 @@ export type {
   DockerLayer,
   DockerPlatform,
   DockerManifest,
+  NpmPackage,
+  NpmVersion,
+  NpmPackageDetail,
+  NpmVersionDetail,
   Instance,
   AccentColor,
 };
@@ -85,6 +93,10 @@ function dockerBase(repo: string): string {
   return `/api/repositories/${encodeURIComponent(repo)}/docker`;
 }
 
+function npmBase(repo: string): string {
+  return `/api/repositories/${encodeURIComponent(repo)}/npm`;
+}
+
 export const api = {
   me: () => request<User>("GET", "/auth/me"),
   login: (username: string, password: string) =>
@@ -129,6 +141,27 @@ export const api = {
     ),
   deleteDockerImage: (repo: string, image: string) =>
     request<void>("DELETE", `${dockerBase(repo)}/images?image=${encodeURIComponent(image)}`),
+
+  // npm repositories
+  npmPackages: (repo: string) =>
+    request<NpmPackage[]>("GET", `${npmBase(repo)}/packages`),
+  npmPackage: (repo: string, name: string) =>
+    request<NpmPackageDetail>(
+      "GET",
+      `${npmBase(repo)}/package?name=${encodeURIComponent(name)}`,
+    ),
+  npmVersion: (repo: string, name: string, version: string) =>
+    request<NpmVersionDetail>(
+      "GET",
+      `${npmBase(repo)}/version?name=${encodeURIComponent(name)}&version=${encodeURIComponent(version)}`,
+    ),
+  deleteNpmVersion: (repo: string, name: string, version: string) =>
+    request<void>(
+      "DELETE",
+      `${npmBase(repo)}/version?name=${encodeURIComponent(name)}&version=${encodeURIComponent(version)}`,
+    ),
+  deleteNpmPackage: (repo: string, name: string) =>
+    request<void>("DELETE", `${npmBase(repo)}/package?name=${encodeURIComponent(name)}`),
 
   // tokens (current user)
   tokens: () => request<Token[]>("GET", "/api/tokens"),

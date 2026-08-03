@@ -18,6 +18,7 @@ import {
 const TYPES: { id: RepositoryType; label: string; hint: string }[] = [
   { id: 'MAVEN', label: 'Maven', hint: 'Served at /maven/<repository> for Gradle and Maven.' },
   { id: 'DOCKER', label: 'Docker', hint: 'Served at /v2 for docker, podman and buildx. Names must be lowercase.' },
+  { id: 'NPM', label: 'npm', hint: 'Served at /npm/<repository> for npm, pnpm, yarn and bun.' },
 ]
 
 export function Admin() {

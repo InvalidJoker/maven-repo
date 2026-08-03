@@ -453,11 +453,6 @@ private suspend inline fun <reified T> ApplicationCall.respondOci(
     respondText(Json.encodeToString(value), ContentType.Application.Json, status)
 }
 
-private suspend fun InputStream.readBounded(limit: Int): ByteArray? = withContext(Dispatchers.IO) {
-    val bytes = readNBytes(limit + 1)
-    if (bytes.size > limit) null else bytes
-}
-
 @Serializable
 private data class OciErrorDetail(val code: String, val message: String)
 

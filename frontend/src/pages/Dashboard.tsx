@@ -9,13 +9,11 @@ import {
   TypeBadge,
   VisibilityBadge,
 } from "../ui";
-import { DockerSnippet } from "../components/DockerSnippet";
-import { InstallSnippet } from "../components/InstallSnippet";
 
 function endpoint(repo: UserRepository): string {
-  return repo.type === "DOCKER"
-    ? `${window.location.host}/${repo.name}/<image>`
-    : `${window.location.origin}/maven/${repo.name}`;
+  if (repo.type === "DOCKER") return `${window.location.host}/${repo.name}/<image>`;
+  if (repo.type === "NPM") return `${window.location.origin}/npm/${repo.name}`;
+  return `${window.location.origin}/maven/${repo.name}`;
 }
 
 export function Dashboard() {
@@ -29,8 +27,6 @@ export function Dashboard() {
       .then(setRepos)
       .catch(() => setError("Failed to load repositories"));
   }, []);
-
-  const hasDocker = repos?.some((repo) => repo.type === "DOCKER") ?? false;
 
   return (
     <div>
@@ -76,31 +72,6 @@ export function Dashboard() {
             </Card>
           </button>
         ))}
-      </div>
-
-      <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="p-5">
-          <h2 className="mb-3 text-sm font-semibold text-neutral-200">
-            Using a Maven repository in your build
-          </h2>
-          <InstallSnippet
-            repoUrl={`${window.location.origin}/maven/<repository>`}
-            username={user?.username}
-          />
-        </Card>
-
-        {hasDocker && (
-          <Card className="p-5">
-            <h2 className="mb-3 text-sm font-semibold text-neutral-200">
-              Using a Docker repository
-            </h2>
-            <DockerSnippet
-              host={window.location.host}
-              repository="<repository>"
-              username={user?.username}
-            />
-          </Card>
-        )}
       </div>
 
       <p className="mt-3 text-xs text-neutral-500">

@@ -46,8 +46,12 @@ class RepositoryAccess(
         return when {
             header.authScheme.equals(AuthScheme.Bearer, ignoreCase = true) -> {
                 val blob = (header as? HttpAuthHeader.Single)?.blob ?: return AuthResult.Invalid
-                val verified = registryTokens.verify(blob) ?: return AuthResult.Invalid
-                verified.principal?.let { AuthResult.User(it) } ?: AuthResult.Anonymous
+                // Either a registry token from the Docker handshake, or a plain access token, which is how npm
+                // sends `_authToken`.
+                registryTokens.verify(blob)
+                    ?.let { verified -> verified.principal?.let { AuthResult.User(it) } ?: AuthResult.Anonymous }
+                    ?: tokens.verifyToken(blob)?.let { AuthResult.User(it) }
+                    ?: AuthResult.Invalid
             }
 
             header.authScheme.equals(AuthScheme.Basic, ignoreCase = true) -> {

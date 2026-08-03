@@ -5,7 +5,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class RepositoryType { MAVEN, DOCKER }
+enum class RepositoryType { MAVEN, DOCKER, NPM }
 
 @Serializable
 data class RepositoryDto(val id: Int, val name: String, val private: Boolean, val type: RepositoryType)
@@ -149,4 +149,42 @@ data class DockerManifestDto(
     val layers: List<DockerLayerDto> = emptyList(),
     val platforms: List<DockerPlatformDto> = emptyList(),
     val labels: Map<String, String> = emptyMap(),
+)
+
+@Serializable
+data class NpmPackageDto(
+    val name: String,
+    val versions: Int,
+    val latest: String? = null,
+    val description: String? = null,
+    val modified: String? = null,
+)
+
+@Serializable
+data class NpmVersionDto(val version: String, val published: String? = null, val tags: List<String> = emptyList())
+
+@Serializable
+data class NpmPackageDetailDto(
+    val name: String,
+    val description: String? = null,
+    val distTags: Map<String, String> = emptyMap(),
+    val versions: List<NpmVersionDto> = emptyList(),
+)
+
+@Serializable
+data class NpmVersionDetailDto(
+    val name: String,
+    val version: String,
+    val description: String? = null,
+    val license: String? = null,
+    val homepage: String? = null,
+    val published: String? = null,
+    val tarball: String,
+    val tarballSize: Long? = null,
+    val shasum: String? = null,
+    val integrity: String? = null,
+    val tags: List<String> = emptyList(),
+    val keywords: List<String> = emptyList(),
+    val dependencies: Map<String, String> = emptyMap(),
+    val devDependencies: Map<String, String> = emptyMap(),
 )

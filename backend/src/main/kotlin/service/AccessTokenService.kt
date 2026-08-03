@@ -86,6 +86,14 @@ class AccessTokenService(private val db: DatabaseService) {
             .singleOrNull()
     }
 
+    /** Verifies a token presented on its own, without a username — how npm clients send `_authToken`. */
+    suspend fun verifyToken(rawToken: String): RegistryPrincipal? = db.query {
+        (AccessTokenTable innerJoin UserTable).selectAll()
+            .where { AccessTokenTable.tokenHash eq hash(rawToken) }
+            .map { RegistryPrincipal(it[UserTable.id].value, it[UserTable.admin], it[AccessTokenTable.id].value) }
+            .singleOrNull()
+    }
+
     /** Repository-id -> permission scopes for a token; empty means unrestricted. */
     suspend fun scopesFor(tokenId: Int): Map<Int, Permission> = db.query {
         AccessTokenScopeTable.selectAll()

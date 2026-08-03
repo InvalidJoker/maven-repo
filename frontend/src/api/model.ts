@@ -1,6 +1,6 @@
 export type Permission = "READ" | "WRITE";
 
-export type RepositoryType = "MAVEN" | "DOCKER";
+export type RepositoryType = "MAVEN" | "DOCKER" | "NPM";
 
 export interface User {
   id: number;
@@ -116,6 +116,44 @@ export interface DockerManifest {
   layers: DockerLayer[];
   platforms: DockerPlatform[];
   labels: Record<string, string>;
+}
+
+export interface NpmPackage {
+  name: string;
+  versions: number;
+  latest: string | null;
+  description: string | null;
+  modified: string | null;
+}
+
+export interface NpmVersion {
+  version: string;
+  published: string | null;
+  tags: string[];
+}
+
+export interface NpmPackageDetail {
+  name: string;
+  description: string | null;
+  distTags: Record<string, string>;
+  versions: NpmVersion[];
+}
+
+export interface NpmVersionDetail {
+  name: string;
+  version: string;
+  description: string | null;
+  license: string | null;
+  homepage: string | null;
+  published: string | null;
+  tarball: string;
+  tarballSize: number | null;
+  shasum: string | null;
+  integrity: string | null;
+  tags: string[];
+  keywords: string[];
+  dependencies: Record<string, string>;
+  devDependencies: Record<string, string>;
 }
 
 export type AccentColor = "EMERALD" | "INDIGO" | "BLUE" | "VIOLET" | "ROSE" | "AMBER";

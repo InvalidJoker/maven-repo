@@ -18,6 +18,8 @@ import de.joker.service.RepositoryService
 import de.joker.service.docker.BlobUploadSessions
 import de.joker.service.docker.DockerBrowserService
 import de.joker.service.docker.DockerRegistryService
+import de.joker.service.npm.NpmBrowserService
+import de.joker.service.npm.NpmRegistryService
 import de.joker.service.storage.StorageBackend
 import de.joker.service.UserService
 import de.joker.service.storage.LocalStorageBackend
@@ -72,4 +74,6 @@ fun appModule(config: ApplicationConfig) = module {
     singleOf(::MavenBrowserService)
     singleOf(::DockerRegistryService)
     singleOf(::DockerBrowserService)
+    singleOf(::NpmRegistryService)
+    singleOf(::NpmBrowserService)
 }

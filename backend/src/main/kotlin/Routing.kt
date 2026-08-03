@@ -5,6 +5,8 @@ import de.joker.routes.authRoutes
 import de.joker.routes.dockerBrowseRoutes
 import de.joker.routes.dockerRegistryRoutes
 import de.joker.routes.mavenRoutes
+import de.joker.routes.npmBrowseRoutes
+import de.joker.routes.npmRegistryRoutes
 import de.joker.routes.repositoryAdminRoutes
 import de.joker.routes.repositoryBrowseRoutes
 import de.joker.routes.instanceRoutes
@@ -19,6 +21,8 @@ import de.joker.service.RepositoryService
 import de.joker.service.docker.BlobUploadSessions
 import de.joker.service.docker.DockerBrowserService
 import de.joker.service.docker.DockerRegistryService
+import de.joker.service.npm.NpmBrowserService
+import de.joker.service.npm.NpmRegistryService
 import de.joker.service.storage.StorageBackend
 import de.joker.service.UserService
 import io.ktor.http.*
@@ -36,6 +40,8 @@ fun Application.configureRouting() {
     val mavenBrowser by inject<MavenBrowserService>()
     val dockerRegistry by inject<DockerRegistryService>()
     val dockerBrowser by inject<DockerBrowserService>()
+    val npmRegistry by inject<NpmRegistryService>()
+    val npmBrowser by inject<NpmBrowserService>()
     val blobUploads by inject<BlobUploadSessions>()
     val instanceSettings by inject<InstanceSettingsService>()
     val oidcService by inject<OidcService>()
@@ -48,6 +54,7 @@ fun Application.configureRouting() {
         authRoutes(userService)
         mavenRoutes(repositoryAccess, storageService)
         dockerRegistryRoutes(repositoryAccess, dockerRegistry, blobUploads, dockerBrowser)
+        npmRegistryRoutes(repositoryAccess, npmRegistry, userService)
 
         if (oidcService.enabled) {
             oidcRoutes(oidcService, userService)
@@ -57,6 +64,7 @@ fun Application.configureRouting() {
             instanceRoutes(instanceSettings, oidcService)
             repositoryBrowseRoutes(repositoryService, mavenBrowser, repositoryAccess)
             dockerBrowseRoutes(repositoryAccess, dockerBrowser, dockerRegistry)
+            npmBrowseRoutes(repositoryAccess, npmBrowser, npmRegistry)
             repositoryAdminRoutes(repositoryService, userService)
             userAdminRoutes(userService)
             tokenRoutes(accessTokenService, repositoryService)
