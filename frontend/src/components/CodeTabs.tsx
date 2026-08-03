@@ -1,16 +1,15 @@
-import { useState } from 'react'
-import { CopyButton } from './CopyButton'
+import { useState } from "react";
+import { CopyButton } from "./CopyButton";
 
 export interface CodeTab {
-  id: string
-  label: string
-  code: string
+  id: string;
+  label: string;
+  code: string;
 }
 
-/** Tabbed, copyable code block shared by the Maven and Docker install snippets. */
 export function CodeTabs({ tabs }: { tabs: CodeTab[] }) {
-  const [active, setActive] = useState(tabs[0]?.id)
-  const code = (tabs.find((tab) => tab.id === active) ?? tabs[0])?.code ?? ''
+  const [active, setActive] = useState(tabs[0]?.id);
+  const code = (tabs.find((tab) => tab.id === active) ?? tabs[0])?.code ?? "";
 
   return (
     <div>
@@ -21,7 +20,9 @@ export function CodeTabs({ tabs }: { tabs: CodeTab[] }) {
               key={tab.id}
               onClick={() => setActive(tab.id)}
               className={`rounded px-2 py-1 text-xs transition-colors ${
-                tab.id === active ? 'bg-brand-500 text-white' : 'text-neutral-400 hover:bg-neutral-800'
+                tab.id === active
+                  ? "bg-brand-500 text-white"
+                  : "text-neutral-400 hover:bg-neutral-800"
               }`}
             >
               {tab.label}
@@ -36,5 +37,5 @@ export function CodeTabs({ tabs }: { tabs: CodeTab[] }) {
         </pre>
       </div>
     </div>
-  )
+  );
 }

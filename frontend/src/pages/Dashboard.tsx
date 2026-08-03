@@ -11,7 +11,8 @@ import {
 } from "../ui";
 
 function endpoint(repo: UserRepository): string {
-  if (repo.type === "DOCKER") return `${window.location.host}/${repo.name}/<image>`;
+  if (repo.type === "DOCKER")
+    return `${window.location.host}/${repo.name}/<image>`;
   if (repo.type === "NPM") return `${window.location.origin}/npm/${repo.name}`;
   return `${window.location.origin}/maven/${repo.name}`;
 }
@@ -32,7 +33,7 @@ export function Dashboard() {
     <div>
       <PageHeading
         title="Repositories"
-        subtitle="Browse the Maven and Docker repositories available to you."
+        subtitle="Browse the Maven, Docker and NPM repositories you have access to."
       />
 
       {error && <p className="text-sm text-red-400">{error}</p>}
