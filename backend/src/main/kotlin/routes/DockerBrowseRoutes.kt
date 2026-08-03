@@ -10,10 +10,6 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-/**
- * Browser API for Docker repositories, the counterpart of the Maven tree endpoints. Image names may contain
- * slashes (`team/api`), so they are passed as a query parameter rather than as path segments.
- */
 fun Route.dockerBrowseRoutes(
     access: RepositoryAccess,
     browser: DockerBrowserService,

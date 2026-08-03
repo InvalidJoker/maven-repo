@@ -55,7 +55,7 @@ dependencies {
 function maven(repoUrl: string, user: string, c?: Coordinates): string {
   const repo = `<repositories>
     <repository>
-        <id>maven-repo</id>
+        <id>artifact-forge</id>
         <url>${repoUrl}</url>
     </repository>
 </repositories>`
@@ -75,7 +75,7 @@ function maven(repoUrl: string, user: string, c?: Coordinates): string {
 <!-- ~/.m2/settings.xml -->
 <servers>
     <server>
-        <id>maven-repo</id>
+        <id>artifact-forge</id>
         <username>${user}</username>
         <password>&lt;access-token&gt;</password>
     </server>

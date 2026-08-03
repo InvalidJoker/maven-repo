@@ -94,7 +94,7 @@ class S3StorageBackend(config: StorageConfig.S3) : StorageBackend {
             if (segments.isEmpty()) return@withContext false
 
             // S3 putObject needs a known content length, so buffer through a temp file.
-            val temp = File.createTempFile("maven-upload", ".tmp")
+            val temp = File.createTempFile("artifact-upload", ".tmp")
             try {
                 temp.outputStream().use { output -> input.copyTo(output) }
                 client.putObject(

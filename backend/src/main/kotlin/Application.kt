@@ -45,11 +45,6 @@ fun Application.configure() {
     stripHeadResponseBodies()
 }
 
-/**
- * A HEAD response carries the headers of the GET it mirrors but never a body. Handlers that answer HEAD with an
- * error payload would otherwise leave those bytes on the connection, which registry clients report as an
- * unsolicited response and which corrupts keep-alive reuse.
- */
 private fun Application.stripHeadResponseBodies() {
     sendPipeline.intercept(ApplicationSendPipeline.After) { message ->
         if (call.request.httpMethod != HttpMethod.Head) return@intercept

@@ -11,6 +11,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "maven-repo"
+rootProject.name = "artifact-forge"
 
 include(":backend", ":frontend")

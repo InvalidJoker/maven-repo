@@ -13,7 +13,7 @@ Uses **bun**, not npm, for the frontend. The frontend is built through Gradle (w
 - `./gradlew :backend:compileKotlin` — fast backend type-check.
 - `./gradlew :frontend:buildFrontend` — `bun install` + `tsc -b && vite build` (use this to type-check the frontend).
 - `./gradlew :backend:shadowJar` — fat jar at `backend/build/libs/backend-all.jar` (note the `-all` suffix, set by the Ktor plugin; `Main-Class` is `io.ktor.server.cio.EngineMain`).
-- `docker build -t maven-repo .` — multi-stage image (bun-built frontend + shadow jar → slim JRE).
+- `docker build -t artifact-forge .` — multi-stage image (bun-built frontend + shadow jar → slim JRE).
 
 Frontend-only, from `frontend/`: `bun run dev` (Vite dev server; proxies `/api`, `/auth`, `/maven` to `:8080`), `bun run lint` (oxlint).
 

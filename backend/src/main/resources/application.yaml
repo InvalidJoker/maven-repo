@@ -15,13 +15,13 @@ database:
 
   # Used when type = h2. Path is relative to the working directory (".mv.db" is appended).
   h2:
-    file: "$DATABASE_H2_FILE:./data/maven-repo"
+    file: "$DATABASE_H2_FILE:./data/artifact-forge"
 
   # Used when type = postgres.
   postgres:
     host: "$DATABASE_HOST:localhost"
     port: "$DATABASE_PORT:5432"
-    database: "$DATABASE_NAME:maven_repo"
+    database: "$DATABASE_NAME:artifact_forge"
     user: "$DATABASE_USER:postgres"
     password: "$DATABASE_PASSWORD:postgres"
 
@@ -44,7 +44,7 @@ storage:
 
   s3:
     # S3 bucket name where artifacts are stored, one prefix per repository.
-    bucket: "$S3_BUCKET:my-maven-repo"
+    bucket: "$S3_BUCKET:my-artifact-forge"
     # Region where the bucket is located.
     region: "$S3_REGION:us-east-1"
     # Access key ID / secret access key for the bucket.

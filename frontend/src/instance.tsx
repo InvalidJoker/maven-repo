@@ -19,7 +19,7 @@ function applyAccent(accent: AccentColor) {
 
 export function InstanceProvider({ children }: { children: ReactNode }) {
   const [instance, setInstance] = useState<Instance>({
-    name: 'Maven Repository',
+    name: 'Artifact Forge',
     iconUrl: null,
     accent: 'EMERALD',
     demo: false,

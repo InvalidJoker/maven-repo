@@ -11,7 +11,6 @@ enum class Permission {
     fun allows(required: Permission): Boolean = this >= required
 }
 
-/** Caller of a registry endpoint, resolved from a session cookie, an access token or a registry bearer token. */
 data class RegistryPrincipal(
     val userId: Int,
     val admin: Boolean,

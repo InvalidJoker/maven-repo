@@ -40,10 +40,6 @@ suspend fun ApplicationCall.respondHeadersOnly(type: ContentType, length: Long?)
     )
 }
 
-/**
- * Repository lookup for the browser API. Unlike the Maven and Docker endpoints, which challenge for credentials,
- * the UI is already signed in (or not) — anything the caller may not see is simply reported as missing.
- */
 suspend fun ApplicationCall.repositoryOrNotFound(
     access: RepositoryAccess,
     required: Permission = Permission.READ,

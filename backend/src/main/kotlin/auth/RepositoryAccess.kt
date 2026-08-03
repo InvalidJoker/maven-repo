@@ -12,11 +12,9 @@ import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.sessions.*
 
-/** How a caller identified itself on a request. */
 sealed interface AuthResult {
     data class User(val principal: RegistryPrincipal) : AuthResult
 
-    /** A valid registry bearer token that carries no user — public pulls complete the Docker handshake this way. */
     data object Anonymous : AuthResult
 
     data object None : AuthResult
@@ -32,10 +30,6 @@ sealed interface RepoAccess {
     enum class Reason { NOT_FOUND, UNAUTHENTICATED, FORBIDDEN }
 }
 
-/**
- * Single entry point for "may this caller do X to repository Y", shared by the Maven endpoints, the Docker
- * registry and the browser API. Each of those renders the denial in its own error format.
- */
 class RepositoryAccess(
     private val repositories: RepositoryService,
     private val tokens: AccessTokenService,
@@ -109,7 +103,6 @@ class RepositoryAccess(
             }
     }
 
-    /** Verifies Basic credentials presented to the Docker token endpoint. */
     suspend fun verifyBasic(call: ApplicationCall): RegistryPrincipal? {
         val credentials = call.request.basicAuthenticationCredentials() ?: return null
         return tokens.verify(credentials.name, credentials.password)

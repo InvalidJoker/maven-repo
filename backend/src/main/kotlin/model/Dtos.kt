@@ -4,7 +4,6 @@ import de.joker.auth.Permission
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** Artifact format a repository holds. Maven artifacts and OCI/Docker images use different layouts and protocols. */
 @Serializable
 enum class RepositoryType { MAVEN, DOCKER }
 

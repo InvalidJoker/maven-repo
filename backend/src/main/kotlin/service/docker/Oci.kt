@@ -36,10 +36,6 @@ data class Digest(val algorithm: String, val hex: String) {
     }
 }
 
-/**
- * Names in the OCI distribution spec are `<repository>/<image>`, where the first segment selects one of our
- * repositories and the rest is the image path inside it (`docker push host/releases/team/api:1.0`).
- */
 data class ImageName(val repository: String, val image: String) {
     override fun toString(): String = "$repository/$image"
 
@@ -59,7 +55,6 @@ private val TAG_PATTERN = Regex("[a-zA-Z0-9_][a-zA-Z0-9._-]{0,127}")
 
 fun isValidTag(tag: String): Boolean = TAG_PATTERN.matches(tag)
 
-/** Storage paths, relative to the repository root of a [de.joker.service.storage.StorageBackend]. */
 object DockerLayout {
     const val IMAGES = "images"
 
@@ -67,7 +62,6 @@ object DockerLayout {
 
     fun manifest(image: String, digest: Digest): String = "$IMAGES/$image/manifests/${digest.algorithm}/${digest.hex}"
 
-    /** The media type a manifest was pushed with, which cannot be recovered from the manifest bytes alone. */
     fun manifestMediaType(image: String, digest: Digest): String = manifest(image, digest) + ".mediatype"
 
     fun tags(image: String): String = "$IMAGES/$image/tags"
@@ -119,7 +113,6 @@ internal data class OciManifest(
     val index: Boolean get() = manifests.isNotEmpty() || mediaType in setOf(MediaTypes.OCI_INDEX, MediaTypes.DOCKER_MANIFEST_LIST)
 }
 
-/** The image config blob an image manifest points at; carries the metadata shown in the UI. */
 @Serializable
 internal data class OciImageConfig(
     val created: String? = null,

@@ -29,13 +29,6 @@ private const val DOCKER_UPLOAD_UUID = "Docker-Upload-UUID"
 private const val API_VERSION = "Docker-Distribution-Api-Version"
 private const val MAX_MANIFEST_BYTES = 8 * 1024 * 1024
 
-/**
- * OCI distribution API (`/v2`), the protocol `docker`, `podman`, `buildx` and `skopeo` speak.
- *
- * Image names are `<repository>/<image>`: the first segment picks one of our Docker repositories, the rest is the
- * image path inside it. Since the spec puts the verb *after* a variable-length name (`/v2/<name>/blobs/<digest>`),
- * which Ktor cannot express as a route, every request goes through one tailcard route and is parsed here.
- */
 fun Route.dockerRegistryRoutes(
     access: RepositoryAccess,
     registry: DockerRegistryService,
@@ -70,10 +63,6 @@ private sealed interface Target {
     data class Tags(override val name: ImageName) : Target
 }
 
-/**
- * Splits `<name…>/<verb>/<reference>` from the end, because the name is the variable-length part. An image
- * component may legally be called `blobs` or `manifests`, so only the trailing occurrence is treated as the verb.
- */
 private fun parseTarget(segments: List<String>): Target? {
     val size = segments.size
     fun name(drop: Int) = ImageName.parseOrNull(segments.dropLast(drop))
@@ -428,7 +417,6 @@ private suspend fun ApplicationCall.uploadAccepted(name: ImageName, id: String, 
 
 private fun uploadLocation(name: ImageName, id: String): String = "/v2/$name/blobs/uploads/$id"
 
-/** Tells the client where to exchange its access token for a bearer token, and for which scope. */
 private fun ApplicationCall.bearerChallenge(name: ImageName?, required: Permission?) {
     val origin = request.origin
     val defaultPort = (origin.scheme == "https" && origin.serverPort == 443) ||
@@ -458,10 +446,6 @@ private suspend fun ApplicationCall.ociError(status: HttpStatusCode, code: Strin
     respondOci(OciErrorResponse(listOf(OciErrorDetail(code, message))), status)
 }
 
-/**
- * Registry clients send an `Accept` header listing only manifest media types, which content negotiation answers
- * with `406` — including for error bodies, hiding the actual failure. Registry JSON is therefore written directly.
- */
 private suspend inline fun <reified T> ApplicationCall.respondOci(
     value: T,
     status: HttpStatusCode = HttpStatusCode.OK,
@@ -469,7 +453,6 @@ private suspend inline fun <reified T> ApplicationCall.respondOci(
     respondText(Json.encodeToString(value), ContentType.Application.Json, status)
 }
 
-/** Reads at most [limit] bytes, or null when the body is larger. */
 private suspend fun InputStream.readBounded(limit: Int): ByteArray? = withContext(Dispatchers.IO) {
     val bytes = readNBytes(limit + 1)
     if (bytes.size > limit) null else bytes

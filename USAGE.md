@@ -39,7 +39,7 @@ Maven — credentials in `~/.m2/settings.xml`:
 ```xml
 <servers>
   <server>
-    <id>maven-repo</id>
+    <id>artifact-forge</id>
     <username>admin</username>
     <password>&lt;access-token&gt;</password>
   </server>
@@ -51,7 +51,7 @@ and the repository in `pom.xml`:
 ```xml
 <repositories>
   <repository>
-    <id>maven-repo</id>
+    <id>artifact-forge</id>
     <url>https://repo.koder.wtf/maven/releases</url>
   </repository>
 </repositories>
