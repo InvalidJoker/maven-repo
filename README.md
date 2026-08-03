@@ -4,10 +4,10 @@
 > This is self-hosted software. There is **no public/hosted instance** — you must run your own (see [Install](#install)).
 > The `repo.koder.wtf` links in the docs are a personal demo you can read from, but not publish to.
 
-- Maven repositories **and** Docker/OCI registries in one instance, sharing users, permissions and tokens
+- Maven repositories, Docker/OCI registries **and** npm registries in one instance, sharing users, permissions and tokens
 - Public and private repositories with per-user read/write grants
-- Access tokens for Gradle/Maven and `docker login`, scoped to specific repositories
-- Web UI to browse artifacts, search packages, inspect images and tags, and manage users, repos and tokens
+- Access tokens for Gradle/Maven, `docker login` and `.npmrc`, scoped to specific repositories
+- Web UI to browse artifacts, search packages, inspect images, tags and package versions, and manage users, repos and tokens
 - H2 (embedded) or PostgreSQL database
 - Local filesystem or S3-compatible storage
 

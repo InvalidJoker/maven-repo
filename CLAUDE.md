@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-A self-hosted artifact registry (inspired by Reposilite): a Ktor/Kotlin backend serving **Maven repositories** and **Docker/OCI registries** from one instance, with a React single-page frontend bundled into the same jar.
+A self-hosted artifact registry (inspired by Reposilite): a Ktor/Kotlin backend serving **Maven repositories**, **Docker/OCI registries** and **npm registries** from one instance, with a React single-page frontend bundled into the same jar.
 
 ## Commands
 
@@ -37,10 +37,10 @@ Exposed **R2DBC** (reactive/coroutine), not JDBC. All DB access goes through `Da
 Artifacts are stored behind the `StorageBackend` interface (`service/storage/StorageBackend.kt`): `LocalStorageBackend` (filesystem) and `S3StorageBackend` (AWS SDK v2, supports a custom `endpoint` for S3-compatible stores). The active one is selected from `StorageConfig` in `AppModule`. All paths are repository-relative; do not reintroduce `java.io.File` into callers — go through the interface. The one deliberate exception is `BlobUploadSessions`, which buffers in-flight Docker layer uploads on local disk because the interface has no append operation; only finished blobs reach the backend.
 
 ### Repository types
-Every repository is `MAVEN` or `DOCKER` (`RepositoryType` on `RepositoryTable`). The type decides which protocol serves it; routes pass the expected type to `RepositoryAccess.check`, so a Maven URL on a Docker repository (and vice versa) is a 404. Everything else — users, grants, token scopes — is shared between both.
+Every repository is `MAVEN`, `DOCKER` or `NPM` (`RepositoryType` on `RepositoryTable`). The type decides which protocol serves it; routes pass the expected type to `RepositoryAccess.check`, so a Maven URL on a Docker repository (or an npm URL on either) is a 404. Everything else — users, grants, token scopes — is shared across all three.
 
 ### Auth & permissions
-Three ways to authenticate: a **session cookie** (browser), an **access token** via HTTP Basic (Gradle/Maven and `docker login`; username = the user's username, password = the token), or a **registry bearer token** (Docker, see below). Sessions are server-side and DB-persisted via `DatabaseSessionStorage` (DB + in-memory cache, hydrated on boot). Two Authentication providers: `AUTH_SESSION` and `AUTH_ADMIN` (constants in `Auth.kt`) — these cover the `/api` routes; the Maven and Docker endpoints authenticate through `RepositoryAccess` instead, because they must challenge in their own protocol's format.
+Three ways to authenticate: a **session cookie** (browser), an **access token** — via HTTP Basic for Gradle/Maven and `docker login` (username = the user's username, password = the token), or as a plain `Bearer` for npm's `_authToken` — or a **registry bearer token** (Docker, see below). The bearer branch of `RepositoryAccess.authenticate` tries the signed registry token first and falls back to looking the value up as an access token, which is what makes one token work everywhere. Sessions are server-side and DB-persisted via `DatabaseSessionStorage` (DB + in-memory cache, hydrated on boot). Two Authentication providers: `AUTH_SESSION` and `AUTH_ADMIN` (constants in `Auth.kt`) — these cover the `/api` routes; the Maven and Docker endpoints authenticate through `RepositoryAccess` instead, because they must challenge in their own protocol's format.
 
 `auth/RepositoryAccess.kt` is the single entry point for "may this caller do X to repository Y": it resolves the principal from any of the three credential types and returns `Granted`/`Denied(reason)`. Maven, Docker and the browser API each render that denial their own way (Basic challenge, OCI error JSON + Bearer challenge, plain 404/403). Permission itself still comes from `AccessControlService.effectivePermission(principal, repoId)`.
 
@@ -58,7 +58,12 @@ Auth uses the standard Docker handshake: `/v2/` answers 401 with a `Bearer` real
 
 Storage layout inside a repository (`service/docker/Oci.kt`): blobs are content-addressed and shared repository-wide at `blobs/<algo>/<hex>`; manifests and tags are per image at `images/<image>/manifests/<algo>/<hex>` (plus a `.mediatype` sidecar, since the pushed media type cannot be recovered from the bytes) and `images/<image>/tags/<tag>` holding the digest. Deleting a tag or image leaves its blobs behind — there is no GC yet.
 
-Two protocol details that are easy to regress: registry clients send an `Accept` header listing only manifest media types, so registry JSON is written with `respondOci` (explicit serialization) instead of content negotiation, which would answer `406` — including for error bodies, hiding the real failure. And `Application.stripHeadResponseBodies` removes bodies from HEAD responses; without it clients report "unsolicited response" and keep-alive connections desynchronize.
+Two protocol details that are easy to regress: registry clients send an `Accept` header listing only manifest media types, so registry JSON is written with `respondOci`/`respondJson` (explicit serialization) instead of content negotiation, which would answer `406` — including for error bodies, hiding the real failure. And `Application.stripHeadResponseBodies` removes bodies from HEAD responses; without it clients report "unsolicited response" and keep-alive connections desynchronize.
+
+### npm registry
+`routes/NpmRegistryRoutes.kt` serves the npm protocol at `/npm/<repo>`. Same shape of problem as OCI — the verb follows a variable-length package name (`/<name>/-/<file>.tgz`) and names may be scoped (`@scope/pkg`, sent as two segments or with the slash percent-encoded) — so one tailcard route feeds `parseNpmTarget`. Implemented: packument, single-version document, tarball download, publish, `dist-tags` (list/add/remove), `whoami` and `ping`.
+
+Per package, `packages/<name>/packument.json` holds the dist-tags, timestamps and every published version manifest **verbatim** (npm puts arbitrary fields in them), with only `dist` rewritten to what was actually stored; `packages/<name>/-/<file>.tgz` holds the tarballs. `dist.tarball` is persisted as a bare file name and expanded to an absolute URL per request, so the registry survives a host change. `shasum`/`integrity` are always recomputed from the uploaded bytes rather than trusted from the client. Publishing is read-modify-write on one document, so `NpmRegistryService` serializes writes per package with an in-process mutex, and republishing an existing version is a `409`.
 
 ### Conventions
 Don't write boilerplate or ceremony for self-explanatory code. DTOs/data classes, simple mappers, and obvious one-liners should not get doc comments, factory functions, builders, or wrapper helpers — keep them plain. Only add a comment or a dedicated function when it carries non-obvious intent (a tricky invariant, a heuristic, a security/permission rule). Match the surrounding terseness.
