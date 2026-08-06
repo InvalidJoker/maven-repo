@@ -20,7 +20,7 @@ class InstanceSettingsService(dataPath: String, private val demo: Boolean = fals
 
     @Serializable
     private data class Stored(
-        val name: String = "Maven Repository",
+        val name: String = "Artifact Forge",
         val iconContentType: String? = null,
         val iconUrl: String? = null,
         val accent: AccentColor = AccentColor.EMERALD,

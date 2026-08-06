@@ -9,7 +9,7 @@ import de.joker.model.VersionInfo
 import de.joker.service.storage.StorageBackend
 import de.joker.service.storage.StorageEntry
 
-class RepositoryBrowserService(private val storage: StorageBackend) {
+class MavenBrowserService(private val storage: StorageBackend) {
 
     suspend fun browse(repository: String, path: String): BrowseResponse? {
         val listing = storage.list(repository, path) ?: return null

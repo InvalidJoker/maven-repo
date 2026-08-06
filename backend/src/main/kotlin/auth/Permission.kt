@@ -11,7 +11,7 @@ enum class Permission {
     fun allows(required: Permission): Boolean = this >= required
 }
 
-data class MavenPrincipal(
+data class RegistryPrincipal(
     val userId: Int,
     val admin: Boolean,
     val tokenId: Int?,

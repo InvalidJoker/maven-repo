@@ -1,6 +1,10 @@
 - rename to artifact repository (not maven only)
-    - support docker images
+    - [x] support docker images
+    - [x] support npm packages
     - support mirroring maven central f.e.
+    - docker: garbage-collect blobs that no manifest references anymore
+    - npm: `npm login` (legacy adduser) so tokens can be minted from the CLI
+    - npm: /-/v1/search endpoint
 
 - admin portal with setup
  - set repo name

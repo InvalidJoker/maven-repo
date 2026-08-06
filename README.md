@@ -1,12 +1,13 @@
-# Maven Repo
+# Artifact Forge
 
 > [!IMPORTANT]
 > This is self-hosted software. There is **no public/hosted instance** — you must run your own (see [Install](#install)).
 > The `repo.koder.wtf` links in the docs are a personal demo you can read from, but not publish to.
 
+- Maven repositories, Docker/OCI registries **and** npm registries in one instance, sharing users, permissions and tokens
 - Public and private repositories with per-user read/write grants
-- Access tokens for Gradle/Maven, scoped to specific repositories
-- Web UI to browse artifacts, search packages, and manage users, repos and tokens
+- Access tokens for Gradle/Maven, `docker login` and `.npmrc`, scoped to specific repositories
+- Web UI to browse artifacts, search packages, inspect images, tags and package versions, and manage users, repos and tokens
 - H2 (embedded) or PostgreSQL database
 - Local filesystem or S3-compatible storage
 
@@ -18,27 +19,27 @@ Docker:
 
 ```sh
 docker run -d -p 8080:8080 \
-  -v maven-repo-data:/app/data \
+  -v artifact-forge-data:/app/data \
   -e SESSION_SECRET=change-me-to-a-long-random-value \
-  ghcr.io/invalidjoker/maven-repo:latest
+  ghcr.io/invalidjoker/artifact-forge:latest
 ```
 
 Or Docker Compose:
 
 ```yaml
 services:
-  maven-repo:
-    image: ghcr.io/invalidjoker/maven-repo:latest
+  artifact-forge:
+    image: ghcr.io/invalidjoker/artifact-forge:latest
     ports:
       - "8080:8080"
     environment:
       SESSION_SECRET: change-me-to-a-long-random-value
     volumes:
-      - maven-data:/app/data
+      - forge-data:/app/data
     restart: unless-stopped
 
 volumes:
-  maven-data:
+  forge-data:
 ```
 
 The initial admin password is generated and printed once to the logs on first boot:
@@ -48,6 +49,20 @@ docker logs <container> | grep -A6 "admin account"
 ```
 
 Open http://localhost:8080 and sign in as `admin`.
+
+## Upgrading from Maven Repo
+
+The project was renamed to Artifact Forge, and the image and two defaults moved with it:
+
+- **Image**: `ghcr.io/invalidjoker/maven-repo` → `ghcr.io/invalidjoker/artifact-forge`.
+- **H2 database**: the default file is now `./data/artifact-forge` (was `./data/maven-repo`). Either rename
+  `maven-repo.mv.db` to `artifact-forge.mv.db` in your data volume, or keep the old path by setting
+  `DATABASE_H2_FILE=./data/maven-repo`. Without one of the two, the instance starts with an empty database.
+- **PostgreSQL**: the compose sample now uses the database `artifact_forge` and the user `forge`. An existing
+  database needs no migration — keep pointing at it with `DATABASE_NAME` / `DATABASE_USER` / `DATABASE_PASSWORD`.
+
+Artifacts, images and instance branding under `/app/data` are untouched, and an instance that already has a
+display name keeps it — the new default only applies to fresh installs.
 
 ## Configuration
 
@@ -75,7 +90,7 @@ All settings are optional environment variables.
 | Variable | Default | Description |
 | --- | --- | --- |
 | `DATABASE_TYPE` | `h2` | `h2` (embedded file) or `postgres`. |
-| `DATABASE_H2_FILE` | `./data/maven-repo` | H2 database file path (used when `DATABASE_TYPE=h2`). |
+| `DATABASE_H2_FILE` | `./data/artifact-forge` | H2 database file path (used when `DATABASE_TYPE=h2`). |
 | `DATABASE_HOST` / `DATABASE_PORT` / `DATABASE_NAME` / `DATABASE_USER` / `DATABASE_PASSWORD` | | PostgreSQL connection settings. |
 
 ### Storage
@@ -84,6 +99,7 @@ All settings are optional environment variables.
 | --- | --- | --- |
 | `STORAGE_TYPE` | `local` | `local` (data volume) or `s3`. |
 | `STORAGE_PATH` | `./data/repositories` | Artifact directory (used when `STORAGE_TYPE=local`). |
+| `UPLOAD_PATH` | `./data/uploads` | Scratch space for in-flight Docker layer uploads. Cleared on boot. |
 | `S3_BUCKET` / `S3_REGION` / `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | | S3 storage settings. |
 | `S3_ENDPOINT` | (AWS) | Custom endpoint for S3-compatible stores (MinIO, R2, Backblaze). |
 
@@ -114,5 +130,5 @@ Requires JDK 21 and [bun](https://bun.sh).
 ```sh
 ./gradlew :backend:run          # run locally on :8080
 ./gradlew :backend:shadowJar    # fat jar at backend/build/libs/backend-all.jar
-docker build -t maven-repo .    # container image
+docker build -t artifact-forge . # container image
 ```

@@ -9,12 +9,12 @@ export function DemoBanner() {
         repository. Deploy your own:
       </span>
       <a
-        href="https://github.com/InvalidJoker/maven-repo"
+        href="https://github.com/InvalidJoker/artifact-forge"
         target="_blank"
         rel="noreferrer"
         className="font-semibold underline underline-offset-2"
       >
-        github.com/InvalidJoker/maven-repo
+        github.com/InvalidJoker/artifact-forge
       </a>
     </div>
   );

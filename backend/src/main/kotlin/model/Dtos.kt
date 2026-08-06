@@ -5,10 +5,17 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class RepositoryDto(val id: Int, val name: String, val private: Boolean)
+enum class RepositoryType { MAVEN, DOCKER, NPM }
 
 @Serializable
-data class CreateRepositoryRequest(val name: String, val private: Boolean = false)
+data class RepositoryDto(val id: Int, val name: String, val private: Boolean, val type: RepositoryType)
+
+@Serializable
+data class CreateRepositoryRequest(
+    val name: String,
+    val private: Boolean = false,
+    val type: RepositoryType = RepositoryType.MAVEN,
+)
 
 @Serializable
 data class GrantPermissionRequest(val username: String, val permission: Permission)
@@ -23,7 +30,12 @@ data class UpdateUserRequest(val admin: Boolean? = null, val password: String? =
 data class RepositoryPermissionDto(val username: String, val permission: Permission)
 
 @Serializable
-data class UserRepositoryDto(val name: String, val private: Boolean, val permission: Permission)
+data class UserRepositoryDto(
+    val name: String,
+    val private: Boolean,
+    val permission: Permission,
+    val type: RepositoryType,
+)
 
 @Serializable
 enum class AccentColor { EMERALD, INDIGO, BLUE, VIOLET, ROSE, AMBER }
@@ -104,4 +116,75 @@ data class BrowseResponse(
     val entries: List<BrowseEntry>,
     val artifact: ArtifactInfo? = null,
     val version: VersionInfo? = null,
+)
+
+@Serializable
+data class DockerImageDto(val name: String, val tags: Int, val lastPushed: String? = null)
+
+@Serializable
+data class DockerTagDto(val tag: String, val digest: String? = null, val pushedAt: String? = null)
+
+@Serializable
+data class DockerLayerDto(val digest: String, val size: Long, val mediaType: String)
+
+@Serializable
+data class DockerPlatformDto(
+    val digest: String,
+    val os: String? = null,
+    val architecture: String? = null,
+    val variant: String? = null,
+)
+
+@Serializable
+data class DockerManifestDto(
+    val image: String,
+    val reference: String,
+    val digest: String,
+    val mediaType: String,
+    val manifestSize: Long,
+    val totalSize: Long,
+    val created: String? = null,
+    val os: String? = null,
+    val architecture: String? = null,
+    val layers: List<DockerLayerDto> = emptyList(),
+    val platforms: List<DockerPlatformDto> = emptyList(),
+    val labels: Map<String, String> = emptyMap(),
+)
+
+@Serializable
+data class NpmPackageDto(
+    val name: String,
+    val versions: Int,
+    val latest: String? = null,
+    val description: String? = null,
+    val modified: String? = null,
+)
+
+@Serializable
+data class NpmVersionDto(val version: String, val published: String? = null, val tags: List<String> = emptyList())
+
+@Serializable
+data class NpmPackageDetailDto(
+    val name: String,
+    val description: String? = null,
+    val distTags: Map<String, String> = emptyMap(),
+    val versions: List<NpmVersionDto> = emptyList(),
+)
+
+@Serializable
+data class NpmVersionDetailDto(
+    val name: String,
+    val version: String,
+    val description: String? = null,
+    val license: String? = null,
+    val homepage: String? = null,
+    val published: String? = null,
+    val tarball: String,
+    val tarballSize: Long? = null,
+    val shasum: String? = null,
+    val integrity: String? = null,
+    val tags: List<String> = emptyList(),
+    val keywords: List<String> = emptyList(),
+    val dependencies: Map<String, String> = emptyMap(),
+    val devDependencies: Map<String, String> = emptyMap(),
 )

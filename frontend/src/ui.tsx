@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
-import type { Permission } from './api'
+import type { Permission, RepositoryType } from './api'
 
 type Variant = 'primary' | 'ghost' | 'danger'
 
@@ -39,7 +39,7 @@ export function Card({ children, className = '' }: { children: ReactNode; classN
   )
 }
 
-type Tone = 'neutral' | 'green' | 'amber' | 'sky' | 'violet'
+type Tone = 'neutral' | 'green' | 'amber' | 'sky' | 'violet' | 'rose'
 
 export function Badge({ children, tone = 'neutral' }: { children: ReactNode; tone?: Tone }) {
   const tones: Record<Tone, string> = {
@@ -48,6 +48,7 @@ export function Badge({ children, tone = 'neutral' }: { children: ReactNode; ton
     amber: 'border-amber-800 bg-amber-950/40 text-amber-300',
     sky: 'border-sky-800 bg-sky-950/40 text-sky-300',
     violet: 'border-violet-800 bg-violet-950/40 text-violet-300',
+    rose: 'border-rose-800 bg-rose-950/40 text-rose-300',
   }
   return (
     <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium ${tones[tone]}`}>
@@ -62,6 +63,11 @@ export function PermissionBadge({ permission }: { permission: Permission }) {
 
 export function VisibilityBadge({ isPrivate }: { isPrivate: boolean }) {
   return <Badge tone={isPrivate ? 'violet' : 'green'}>{isPrivate ? 'private' : 'public'}</Badge>
+}
+
+export function TypeBadge({ type }: { type: RepositoryType }) {
+  const tones: Record<RepositoryType, Tone> = { MAVEN: 'neutral', DOCKER: 'sky', NPM: 'rose' }
+  return <Badge tone={tones[type]}>{type.toLowerCase()}</Badge>
 }
 
 export function Table({ head, children }: { head: ReactNode; children: ReactNode }) {

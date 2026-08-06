@@ -2,11 +2,19 @@ import { useEffect, useState } from "react";
 import { api, type UserRepository } from "../api";
 import { useAuth } from "../auth";
 import { navigate } from "../router";
-import { Card, PageHeading, PermissionBadge, VisibilityBadge } from "../ui";
-import { InstallSnippet } from "../components/InstallSnippet";
+import {
+  Card,
+  PageHeading,
+  PermissionBadge,
+  TypeBadge,
+  VisibilityBadge,
+} from "../ui";
 
-function repoUrl(name: string): string {
-  return `${window.location.origin}/maven/${name}`;
+function endpoint(repo: UserRepository): string {
+  if (repo.type === "DOCKER")
+    return `${window.location.host}/${repo.name}/<image>`;
+  if (repo.type === "NPM") return `${window.location.origin}/npm/${repo.name}`;
+  return `${window.location.origin}/maven/${repo.name}`;
 }
 
 export function Dashboard() {
@@ -25,7 +33,7 @@ export function Dashboard() {
     <div>
       <PageHeading
         title="Repositories"
-        subtitle="Browse the repositories available to you."
+        subtitle="Browse the Maven, Docker and NPM repositories you have access to."
       />
 
       {error && <p className="text-sm text-red-400">{error}</p>}
@@ -49,6 +57,7 @@ export function Dashboard() {
                   <span className="font-medium text-neutral-100">
                     {repo.name}
                   </span>
+                  <TypeBadge type={repo.type} />
                   {user ? (
                     <>
                       <VisibilityBadge isPrivate={repo.private} />
@@ -57,7 +66,7 @@ export function Dashboard() {
                   ) : null}
                 </div>
                 <code className="mt-1 block truncate text-xs text-neutral-500">
-                  {repoUrl(repo.name)}
+                  {endpoint(repo)}
                 </code>
               </div>
               <span className="ml-3 shrink-0 text-neutral-600">→</span>
@@ -66,20 +75,12 @@ export function Dashboard() {
         ))}
       </div>
 
-      <Card className="mt-8 p-5">
-        <h2 className="mb-3 text-sm font-semibold text-neutral-200">
-          Using a repository in your build
-        </h2>
-        <InstallSnippet
-          repoUrl={`${window.location.origin}/maven/<repository>`}
-          username={user?.username}
-        />
-        <p className="mt-3 text-xs text-neutral-500">
-          Public repositories can be read without credentials. Create an access
-          token under <span className="text-neutral-300">Tokens</span> to publish
-          or read private repositories.
-        </p>
-      </Card>
+      <p className="mt-3 text-xs text-neutral-500">
+        Public repositories can be read without credentials. Create an access
+        token under <span className="text-neutral-300">Tokens</span> to publish
+        or read private repositories — the same token works for Gradle/Maven and{" "}
+        <span className="text-neutral-300">docker login</span>.
+      </p>
     </div>
   );
 }

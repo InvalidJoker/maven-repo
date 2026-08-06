@@ -10,9 +10,13 @@ import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.S3Configuration
+import software.amazon.awssdk.services.s3.model.Delete
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
 import java.io.File
@@ -57,7 +61,7 @@ class S3StorageBackend(config: StorageConfig.S3) : StorageBackend {
             val name = obj.key().removePrefix(prefix)
             // Skip the directory placeholder and anything nested deeper.
             if (name.isEmpty() || name.contains('/')) continue
-            entries += StorageEntry(name, directory = false, size = obj.size())
+            entries += StorageEntry(name, directory = false, size = obj.size(), lastModified = obj.lastModified())
         }
 
         // A non-root prefix with no children does not exist as a directory.
@@ -90,7 +94,7 @@ class S3StorageBackend(config: StorageConfig.S3) : StorageBackend {
             if (segments.isEmpty()) return@withContext false
 
             // S3 putObject needs a known content length, so buffer through a temp file.
-            val temp = File.createTempFile("maven-upload", ".tmp")
+            val temp = File.createTempFile("artifact-upload", ".tmp")
             try {
                 temp.outputStream().use { output -> input.copyTo(output) }
                 client.putObject(
@@ -102,6 +106,33 @@ class S3StorageBackend(config: StorageConfig.S3) : StorageBackend {
                 temp.delete()
             }
         }
+
+    override suspend fun delete(repository: String, path: String): Boolean = withContext(Dispatchers.IO) {
+        val key = objectKey(repository, path)
+        if (!exists(repository, path)) return@withContext false
+        client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(key).build())
+        true
+    }
+
+    override suspend fun deleteDirectory(repository: String, path: String): Boolean = withContext(Dispatchers.IO) {
+        val prefix = objectKey(repository, path) + "/"
+        var deleted = false
+        val pages = client.listObjectsV2Paginator(
+            ListObjectsV2Request.builder().bucket(bucket).prefix(prefix).build(),
+        )
+        for (page in pages) {
+            val keys = page.contents().map { ObjectIdentifier.builder().key(it.key()).build() }
+            if (keys.isEmpty()) continue
+            client.deleteObjects(
+                DeleteObjectsRequest.builder()
+                    .bucket(bucket)
+                    .delete(Delete.builder().objects(keys).build())
+                    .build(),
+            )
+            deleted = true
+        }
+        deleted
+    }
 
     private fun cleanSegments(path: String): List<String> =
         path.split('/').filter { it.isNotEmpty() && it != "." && it != ".." }

@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
+import java.time.Instant
 
 class LocalStorageBackend(rootPath: String) : StorageBackend {
 
@@ -26,8 +27,14 @@ class LocalStorageBackend(rootPath: String) : StorageBackend {
     override suspend fun list(repository: String, path: String): List<StorageEntry>? = withContext(Dispatchers.IO) {
         val dir = fileFor(repository, path) ?: return@withContext null
         if (!dir.isDirectory) return@withContext null
-        dir.listFiles()?.map { StorageEntry(it.name, it.isDirectory, if (it.isFile) it.length() else null) }
-            ?: emptyList()
+        dir.listFiles()?.map {
+            StorageEntry(
+                name = it.name,
+                directory = it.isDirectory,
+                size = if (it.isFile) it.length() else null,
+                lastModified = Instant.ofEpochMilli(it.lastModified()),
+            )
+        } ?: emptyList()
     }
 
     override suspend fun read(repository: String, path: String): StorageObject? = withContext(Dispatchers.IO) {
@@ -46,4 +53,14 @@ class LocalStorageBackend(rootPath: String) : StorageBackend {
             file.outputStream().use { output -> input.copyTo(output) }
             true
         }
+
+    override suspend fun delete(repository: String, path: String): Boolean = withContext(Dispatchers.IO) {
+        val file = fileFor(repository, path)?.takeIf { it.isFile } ?: return@withContext false
+        file.delete()
+    }
+
+    override suspend fun deleteDirectory(repository: String, path: String): Boolean = withContext(Dispatchers.IO) {
+        val dir = fileFor(repository, path)?.takeIf { it.isDirectory } ?: return@withContext false
+        dir.deleteRecursively()
+    }
 }

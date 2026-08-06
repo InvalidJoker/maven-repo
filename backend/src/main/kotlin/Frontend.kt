@@ -28,7 +28,7 @@ fun Application.configureFrontend() {
     }
 }
 
-/** Long cache for content-hashed Vite assets; a shorter one for the favicon and other statics. */
+// Cache vite assets
 private fun staticCache(resource: java.net.URL): List<CacheControl> {
     val path = resource.path
     return when {

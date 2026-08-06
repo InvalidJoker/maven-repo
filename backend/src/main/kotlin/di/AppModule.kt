@@ -11,8 +11,15 @@ import de.joker.service.AccessControlService
 import de.joker.service.AccessTokenService
 import de.joker.service.InstanceSettingsService
 import de.joker.service.OidcService
-import de.joker.service.RepositoryBrowserService
+import de.joker.auth.RepositoryAccess
+import de.joker.service.MavenBrowserService
+import de.joker.service.RegistryTokenService
 import de.joker.service.RepositoryService
+import de.joker.service.docker.BlobUploadSessions
+import de.joker.service.docker.DockerBrowserService
+import de.joker.service.docker.DockerRegistryService
+import de.joker.service.npm.NpmBrowserService
+import de.joker.service.npm.NpmRegistryService
 import de.joker.service.storage.StorageBackend
 import de.joker.service.UserService
 import de.joker.service.storage.LocalStorageBackend
@@ -52,11 +59,21 @@ fun appModule(config: ApplicationConfig) = module {
         }
     }
 
+    single {
+        BlobUploadSessions(config.propertyOrNull("storage.uploadPath")?.getString() ?: "./data/uploads")
+    }
+
     singleOf(::DatabaseService)
     singleOf(::DatabaseSessionStorage)
     singleOf(::UserService)
     singleOf(::RepositoryService)
     singleOf(::AccessTokenService)
     singleOf(::AccessControlService)
-    singleOf(::RepositoryBrowserService)
+    singleOf(::RegistryTokenService)
+    singleOf(::RepositoryAccess)
+    singleOf(::MavenBrowserService)
+    singleOf(::DockerRegistryService)
+    singleOf(::DockerBrowserService)
+    singleOf(::NpmRegistryService)
+    singleOf(::NpmBrowserService)
 }

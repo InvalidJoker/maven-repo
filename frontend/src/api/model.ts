@@ -1,5 +1,7 @@
 export type Permission = "READ" | "WRITE";
 
+export type RepositoryType = "MAVEN" | "DOCKER" | "NPM";
+
 export interface User {
   id: number;
   username: string;
@@ -10,12 +12,14 @@ export interface Repository {
   id: number;
   name: string;
   private: boolean;
+  type: RepositoryType;
 }
 
 export interface UserRepository {
   name: string;
   private: boolean;
   permission: Permission;
+  type: RepositoryType;
 }
 
 export interface RepositoryPermission {
@@ -72,6 +76,84 @@ export interface SearchResult {
   groupId: string;
   artifactId: string;
   latestVersion: string;
+}
+
+export interface DockerImage {
+  name: string;
+  tags: number;
+  lastPushed: string | null;
+}
+
+export interface DockerTag {
+  tag: string;
+  digest: string | null;
+  pushedAt: string | null;
+}
+
+export interface DockerLayer {
+  digest: string;
+  size: number;
+  mediaType: string;
+}
+
+export interface DockerPlatform {
+  digest: string;
+  os: string | null;
+  architecture: string | null;
+  variant: string | null;
+}
+
+export interface DockerManifest {
+  image: string;
+  reference: string;
+  digest: string;
+  mediaType: string;
+  manifestSize: number;
+  totalSize: number;
+  created: string | null;
+  os: string | null;
+  architecture: string | null;
+  layers: DockerLayer[];
+  platforms: DockerPlatform[];
+  labels: Record<string, string>;
+}
+
+export interface NpmPackage {
+  name: string;
+  versions: number;
+  latest: string | null;
+  description: string | null;
+  modified: string | null;
+}
+
+export interface NpmVersion {
+  version: string;
+  published: string | null;
+  tags: string[];
+}
+
+export interface NpmPackageDetail {
+  name: string;
+  description: string | null;
+  distTags: Record<string, string>;
+  versions: NpmVersion[];
+}
+
+export interface NpmVersionDetail {
+  name: string;
+  version: string;
+  description: string | null;
+  license: string | null;
+  homepage: string | null;
+  published: string | null;
+  tarball: string;
+  tarballSize: number | null;
+  shasum: string | null;
+  integrity: string | null;
+  tags: string[];
+  keywords: string[];
+  dependencies: Record<string, string>;
+  devDependencies: Record<string, string>;
 }
 
 export type AccentColor = "EMERALD" | "INDIGO" | "BLUE" | "VIOLET" | "ROSE" | "AMBER";

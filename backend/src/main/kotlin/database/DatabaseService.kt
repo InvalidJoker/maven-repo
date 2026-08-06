@@ -15,9 +15,10 @@ class DatabaseService(config: DatabaseConfig) {
     suspend fun <T> query(block: suspend R2dbcTransaction.() -> T): T =
         suspendTransaction(database) { block() }
 
+    /** Creates missing tables and columns. There are no migrations, so existing columns are never altered. */
     suspend fun initSchema(vararg tables: Table) {
         if (tables.isEmpty()) return
-        query { SchemaUtils.create(*tables) }
+        query { SchemaUtils.createMissingTablesAndColumns(*tables) }
     }
 
     private fun connect(config: DatabaseConfig): R2dbcDatabase {

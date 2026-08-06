@@ -1,6 +1,7 @@
 import type {
   Permission,
   Repository,
+  RepositoryType,
   User,
   UserRepository,
   RepositoryPermission,
@@ -10,6 +11,15 @@ import type {
   BrowseResponse,
   BrowseEntry,
   SearchResult,
+  DockerImage,
+  DockerTag,
+  DockerLayer,
+  DockerPlatform,
+  DockerManifest,
+  NpmPackage,
+  NpmVersion,
+  NpmPackageDetail,
+  NpmVersionDetail,
   Instance,
   AccentColor,
 } from "./model";
@@ -18,6 +28,7 @@ export type {
   Permission,
   BrowseEntry,
   Repository,
+  RepositoryType,
   User,
   UserRepository,
   RepositoryPermission,
@@ -26,6 +37,15 @@ export type {
   CreatedToken,
   BrowseResponse,
   SearchResult,
+  DockerImage,
+  DockerTag,
+  DockerLayer,
+  DockerPlatform,
+  DockerManifest,
+  NpmPackage,
+  NpmVersion,
+  NpmPackageDetail,
+  NpmVersionDetail,
   Instance,
   AccentColor,
 };
@@ -69,6 +89,14 @@ async function request<T>(
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
+function dockerBase(repo: string): string {
+  return `/api/repositories/${encodeURIComponent(repo)}/docker`;
+}
+
+function npmBase(repo: string): string {
+  return `/api/repositories/${encodeURIComponent(repo)}/npm`;
+}
+
 export const api = {
   me: () => request<User>("GET", "/auth/me"),
   login: (username: string, password: string) =>
@@ -77,6 +105,8 @@ export const api = {
 
   visibleRepositories: () =>
     request<UserRepository[]>("GET", "/api/repositories"),
+  repository: (repo: string) =>
+    request<UserRepository>("GET", `/api/repositories/${encodeURIComponent(repo)}`),
   browse: (repo: string, path: string) => {
     const encoded = path
       .split("/")
@@ -94,6 +124,45 @@ export const api = {
       `/api/repositories/${encodeURIComponent(repo)}/search?q=${encodeURIComponent(query)}`,
     ),
 
+  // docker repositories
+  dockerImages: (repo: string) =>
+    request<DockerImage[]>("GET", `${dockerBase(repo)}/images`),
+  dockerTags: (repo: string, image: string) =>
+    request<DockerTag[]>("GET", `${dockerBase(repo)}/tags?image=${encodeURIComponent(image)}`),
+  dockerManifest: (repo: string, image: string, reference: string) =>
+    request<DockerManifest>(
+      "GET",
+      `${dockerBase(repo)}/manifest?image=${encodeURIComponent(image)}&reference=${encodeURIComponent(reference)}`,
+    ),
+  deleteDockerTag: (repo: string, image: string, tag: string) =>
+    request<void>(
+      "DELETE",
+      `${dockerBase(repo)}/tags?image=${encodeURIComponent(image)}&tag=${encodeURIComponent(tag)}`,
+    ),
+  deleteDockerImage: (repo: string, image: string) =>
+    request<void>("DELETE", `${dockerBase(repo)}/images?image=${encodeURIComponent(image)}`),
+
+  // npm repositories
+  npmPackages: (repo: string) =>
+    request<NpmPackage[]>("GET", `${npmBase(repo)}/packages`),
+  npmPackage: (repo: string, name: string) =>
+    request<NpmPackageDetail>(
+      "GET",
+      `${npmBase(repo)}/package?name=${encodeURIComponent(name)}`,
+    ),
+  npmVersion: (repo: string, name: string, version: string) =>
+    request<NpmVersionDetail>(
+      "GET",
+      `${npmBase(repo)}/version?name=${encodeURIComponent(name)}&version=${encodeURIComponent(version)}`,
+    ),
+  deleteNpmVersion: (repo: string, name: string, version: string) =>
+    request<void>(
+      "DELETE",
+      `${npmBase(repo)}/version?name=${encodeURIComponent(name)}&version=${encodeURIComponent(version)}`,
+    ),
+  deleteNpmPackage: (repo: string, name: string) =>
+    request<void>("DELETE", `${npmBase(repo)}/package?name=${encodeURIComponent(name)}`),
+
   // tokens (current user)
   tokens: () => request<Token[]>("GET", "/api/tokens"),
   createToken: (name: string, scopes: Scope[]) =>
@@ -104,10 +173,11 @@ export const api = {
 
   // repositories (admin)
   repositories: () => request<Repository[]>("GET", "/api/repositories"),
-  createRepository: (name: string, isPrivate: boolean) =>
+  createRepository: (name: string, isPrivate: boolean, type: RepositoryType) =>
     request<Repository>("POST", "/api/repositories", {
       name,
       private: isPrivate,
+      type,
     }),
   permissions: (repo: string) =>
     request<RepositoryPermission[]>(
