@@ -1,47 +1,15 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { api, type Repository, type RepositoryMode, type RepositoryType } from '../api'
+import { useEffect, useState } from 'react'
+import { Plus } from 'lucide-react'
+import { api, type Repository } from '../api'
 import { navigate } from '../router'
 import { AdminNav } from '../components/AdminNav'
-import { UpstreamList } from '../components/UpstreamList'
-import { parseUpstreams } from '../upstreams'
-import {
-  Button,
-  Card,
-  ErrorText,
-  Input,
-  ModeBadge,
-  PageHeading,
-  Table,
-  Td,
-  Th,
-  TypeBadge,
-  VisibilityBadge,
-} from '../ui'
-
-const TYPES: { id: RepositoryType; label: string; hint: string }[] = [
-  { id: 'MAVEN', label: 'Maven', hint: 'Served at /maven/<repository> for Gradle and Maven.' },
-  { id: 'DOCKER', label: 'Docker', hint: 'Served at /v2 for docker, podman and buildx. Names must be lowercase.' },
-  { id: 'NPM', label: 'npm', hint: 'Served at /npm/<repository> for npm, pnpm, yarn and bun.' },
-]
-
-const MODES: { id: RepositoryMode; label: string; hint: string }[] = [
-  { id: 'HOSTED', label: 'Hosted', hint: 'Holds what is published to it.' },
-  {
-    id: 'PROXY',
-    label: 'Mirror',
-    hint: 'Read-only. Passes requests on to an upstream registry and caches every artifact it hands out.',
-  },
-]
+import { CreateRepositoryDialog } from '../components/CreateRepositoryDialog'
+import { Button, ErrorText, ModeBadge, PageHeading, Table, Td, Th, TypeBadge, VisibilityBadge } from '../ui'
 
 export function Admin() {
   const [repos, setRepos] = useState<Repository[]>([])
-  const [name, setName] = useState('')
-  const [type, setType] = useState<RepositoryType>('MAVEN')
-  const [mode, setMode] = useState<RepositoryMode>('HOSTED')
-  const [remotes, setRemotes] = useState('')
-  const [isPrivate, setPrivate] = useState(false)
+  const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
 
   const reload = () => {
     api.repositories().then(setRepos).catch(() => setError('Failed to load repositories'))
@@ -49,98 +17,20 @@ export function Admin() {
 
   useEffect(reload, [])
 
-  const onCreate = async (event: FormEvent) => {
-    event.preventDefault()
-    if (!name.trim()) return
-    setBusy(true)
-    setError('')
-    try {
-      await api.createRepository({
-        name: name.trim(),
-        private: isPrivate,
-        type,
-        mode,
-        remoteUrls: mode === 'PROXY' ? parseUpstreams(remotes) : undefined,
-      })
-      setName('')
-      setRemotes('')
-      setPrivate(false)
-      reload()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create repository')
-    } finally {
-      setBusy(false)
-    }
-  }
-
   return (
     <div>
       <AdminNav active="repositories" />
-      <PageHeading title="Repositories" subtitle="Create repositories and manage who can access them." />
 
-      <Card className="mb-6 p-4">
-        <form onSubmit={onCreate} className="space-y-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <Input
-              placeholder="repository-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="max-w-xs"
-            />
-            <div className="flex gap-1">
-              {TYPES.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setType(option.id)}
-                  className={`rounded px-2 py-1 text-xs transition-colors ${
-                    type === option.id ? 'bg-brand-500 text-white' : 'text-neutral-400 hover:bg-neutral-800'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-1">
-              {MODES.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setMode(option.id)}
-                  className={`rounded px-2 py-1 text-xs transition-colors ${
-                    mode === option.id ? 'bg-brand-500 text-white' : 'text-neutral-400 hover:bg-neutral-800'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-            <label className="flex items-center gap-2 text-sm text-neutral-300">
-              <input
-                type="checkbox"
-                checked={isPrivate}
-                onChange={(e) => setPrivate(e.target.checked)}
-                className="accent-brand-500"
-              />
-              Private
-            </label>
-            <Button type="submit" disabled={busy}>
-              Create
-            </Button>
-            <ErrorText>{error}</ErrorText>
-          </div>
+      {/* PageHeading brings its own bottom margin, so the row does not add another. */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageHeading title="Repositories" subtitle="Create repositories and manage who can access them." />
+        <Button onClick={() => setCreating(true)} className="gap-1.5">
+          <Plus size={14} />
+          New repository
+        </Button>
+      </div>
 
-          {mode === 'PROXY' && (
-            <div className="border-t border-neutral-800 pt-3">
-              <UpstreamList type={type} value={remotes} onChange={setRemotes} />
-            </div>
-          )}
-
-          <p className="text-xs text-neutral-500">
-            {TYPES.find((t) => t.id === type)?.hint} {MODES.find((m) => m.id === mode)?.hint}
-          </p>
-        </form>
-      </Card>
+      <ErrorText>{error}</ErrorText>
 
       <Table
         head={
@@ -154,9 +44,7 @@ export function Admin() {
       >
         {repos.length === 0 ? (
           <tr>
-            <Td className="text-neutral-500" >
-              No repositories yet.
-            </Td>
+            <Td className="text-neutral-500">No repositories yet.</Td>
             <Td />
             <Td />
             <Td />
@@ -182,10 +70,7 @@ export function Admin() {
                 <VisibilityBadge isPrivate={repo.private} />
               </Td>
               <Td className="text-right">
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate(`/admin/repos/${encodeURIComponent(repo.name)}`)}
-                >
+                <Button variant="ghost" onClick={() => navigate(`/admin/repos/${encodeURIComponent(repo.name)}`)}>
                   Manage
                 </Button>
               </Td>
@@ -193,6 +78,8 @@ export function Admin() {
           ))
         )}
       </Table>
+
+      {creating && <CreateRepositoryDialog onClose={() => setCreating(false)} onCreated={reload} />}
     </div>
   )
 }
