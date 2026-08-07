@@ -20,7 +20,8 @@ data class RepositoryDto(
     val private: Boolean,
     val type: RepositoryType,
     val mode: RepositoryMode = RepositoryMode.HOSTED,
-    val remoteUrl: String? = null,
+    /** Upstreams of a proxy repository, consulted in order until one has what was asked for. */
+    val remoteUrls: List<String> = emptyList(),
     val cacheTtlSeconds: Long = DEFAULT_CACHE_TTL_SECONDS,
 )
 
@@ -30,14 +31,14 @@ data class CreateRepositoryRequest(
     val private: Boolean = false,
     val type: RepositoryType = RepositoryType.MAVEN,
     val mode: RepositoryMode = RepositoryMode.HOSTED,
-    val remoteUrl: String? = null,
+    val remoteUrls: List<String> = emptyList(),
     val cacheTtlSeconds: Long = DEFAULT_CACHE_TTL_SECONDS,
 )
 
 @Serializable
 data class UpdateRepositoryRequest(
     val private: Boolean? = null,
-    val remoteUrl: String? = null,
+    val remoteUrls: List<String>? = null,
     val cacheTtlSeconds: Long? = null,
 )
 
@@ -60,7 +61,7 @@ data class UserRepositoryDto(
     val permission: Permission,
     val type: RepositoryType,
     val mode: RepositoryMode = RepositoryMode.HOSTED,
-    val remoteUrl: String? = null,
+    val remoteUrls: List<String> = emptyList(),
     val cacheTtlSeconds: Long = DEFAULT_CACHE_TTL_SECONDS,
 )
 

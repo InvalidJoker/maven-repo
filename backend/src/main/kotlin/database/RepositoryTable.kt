@@ -11,7 +11,9 @@ object RepositoryTable : IntIdTable("repositories") {
     val private = bool("private").default(false)
     val type = enumerationByName<RepositoryType>("type", 16).default(RepositoryType.MAVEN)
     val mode = enumerationByName<RepositoryMode>("mode", 16).default(RepositoryMode.HOSTED)
-    val remoteUrl = varchar("remote_url", 512).nullable()
+
+    /** Upstreams of a proxy repository, one per line and in the order they are consulted. */
+    val remoteUrls = text("remote_urls").nullable()
 
     /** How long mutable upstream documents (metadata, packuments, tags) stay usable before being refetched. */
     val cacheTtlSeconds = long("cache_ttl_seconds").default(DEFAULT_CACHE_TTL_SECONDS)

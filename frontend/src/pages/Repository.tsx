@@ -42,18 +42,18 @@ export function Repository({ repo, parts }: { repo: string; parts: string[] }) {
 
   return (
     <div>
-      {info.mode === "PROXY" && <MirrorNotice remoteUrl={info.remoteUrl} />}
+      {info.mode === "PROXY" && <MirrorNotice remoteUrls={info.remoteUrls} />}
       {browser}
     </div>
   );
 }
 
 /** A mirror only shows what has been pulled through it, which is worth saying before the listing looks empty. */
-function MirrorNotice({ remoteUrl }: { remoteUrl: string | null }) {
+function MirrorNotice({ remoteUrls }: { remoteUrls: string[] }) {
   return (
     <Card className="mb-4 p-3 text-xs text-neutral-400">
-      Mirror of <span className="text-neutral-200">{remoteUrl}</span>. Listed below is what has been requested
-      through it so far — anything else is fetched from the upstream on first use.
+      Mirror of <span className="text-neutral-200">{remoteUrls.join(", ")}</span>. Listed below is what has been
+      requested through it so far — anything else is fetched from the upstreams on first use.
     </Card>
   );
 }

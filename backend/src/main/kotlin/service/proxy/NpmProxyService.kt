@@ -31,29 +31,37 @@ sealed interface ProxyPackument {
 class NpmProxyService(private val cache: ProxyCache, private val registry: NpmRegistryService) {
 
     suspend fun packument(repo: RepositoryDto, name: String): ProxyPackument {
-        val remote = repo.remoteUrl ?: return ProxyPackument.NotFound
         val path = NpmLayout.packument(name)
         if (cache.fresh(repo.name, path, Duration.ofSeconds(repo.cacheTtlSeconds))) {
             return found(repo, name) ?: ProxyPackument.NotFound
         }
 
-        val response = cache.fetch(upstreamUrl(remote, name), accept = listOf(ContentType.Application.Json.toString()))
-        val mirrored = response?.takeIf { it.successful }?.let { mirror(name, it.body) }
-        if (mirrored == null) {
-            // A 404, a 500 or an unreachable upstream all fall back to whatever was cached last.
-            found(repo, name)?.let { return it }
-            return if (response?.status == HttpStatusCode.NotFound) ProxyPackument.NotFound else ProxyPackument.Error
+        var failed = false
+        for (remote in repo.remoteUrls) {
+            val response = cache.fetch(
+                upstreamUrl(remote, name),
+                accept = listOf(ContentType.Application.Json.toString()),
+            )
+            if (response != null && response.status in UNAVAILABLE_UPSTREAM) continue
+
+            val mirrored = response?.takeIf { it.successful }?.let { mirror(name, it.body) }
+            if (mirrored == null) {
+                failed = true
+                continue
+            }
+            registry.store(repo.name, mirrored)
+            return ProxyPackument.Found(mirrored)
         }
 
-        registry.store(repo.name, mirrored)
-        return ProxyPackument.Found(mirrored)
+        // A 404 everywhere, a 500 or an unreachable upstream all fall back to whatever was cached last.
+        found(repo, name)?.let { return it }
+        return if (failed) ProxyPackument.Error else ProxyPackument.NotFound
     }
 
     private suspend fun found(repo: RepositoryDto, name: String): ProxyPackument.Found? =
         registry.packument(repo.name, name)?.let { ProxyPackument.Found(it) }
 
     suspend fun tarball(call: ApplicationCall, repo: RepositoryDto, name: String, file: String): ProxyOutcome {
-        val remote = repo.remoteUrl ?: return ProxyOutcome.NOT_FOUND
         val path = NpmLayout.tarball(name, file)
 
         cache.cached(repo.name, path)?.let {
@@ -61,9 +69,20 @@ class NpmProxyService(private val cache: ProxyCache, private val registry: NpmRe
             return ProxyOutcome.SERVED
         }
 
-        val url = (packument(repo, name) as? ProxyPackument.Found)?.packument?.remote?.get(file)
-            ?: upstreamUrl(remote, "$name/-/$file")
-        return cache.stream(call, repo.name, path, url, ContentType.Application.OctetStream)
+        // The packument records where each tarball actually lives, which is not always the registry that
+        // served the packument; the conventional paths are the fallback.
+        val mirrored = (packument(repo, name) as? ProxyPackument.Found)?.packument?.remote?.get(file)
+        val urls = (listOfNotNull(mirrored) + repo.remoteUrls.map { upstreamUrl(it, "$name/-/$file") }).distinct()
+
+        var failed = false
+        for (url in urls) {
+            when (val outcome = cache.stream(call, repo.name, path, url, ContentType.Application.OctetStream)) {
+                ProxyOutcome.NOT_FOUND -> Unit
+                ProxyOutcome.UPSTREAM_ERROR -> failed = true
+                else -> return outcome
+            }
+        }
+        return if (failed) ProxyOutcome.UPSTREAM_ERROR else ProxyOutcome.NOT_FOUND
     }
 
     /** Rewrites an upstream packument into the stored form, remembering where each tarball actually lives. */

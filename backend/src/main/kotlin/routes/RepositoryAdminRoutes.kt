@@ -41,14 +41,14 @@ fun Route.repositoryAdminRoutes(repositories: RepositoryService, users: UserServ
                     return@post
                 }
 
-                val remote = if (request.mode == RepositoryMode.PROXY) {
-                    remoteUrl(request.remoteUrl, request.type)
+                val remotes = if (request.mode == RepositoryMode.PROXY) {
+                    remoteUrls(request.remoteUrls, request.type)
                         ?: return@post call.respond(
                             HttpStatusCode.BadRequest,
-                            mapOf("error" to "A proxy repository needs an http(s) upstream URL"),
+                            mapOf("error" to "A proxy repository needs at least one http(s) upstream URL"),
                         )
                 } else {
-                    null
+                    emptyList()
                 }
                 if (request.cacheTtlSeconds !in 0..MAX_CACHE_TTL_SECONDS) {
                     return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid cache lifetime"))
@@ -56,7 +56,7 @@ fun Route.repositoryAdminRoutes(repositories: RepositoryService, users: UserServ
 
                 call.respond(
                     HttpStatusCode.Created,
-                    repositories.create(request.copy(name = name, remoteUrl = remote)),
+                    repositories.create(request.copy(name = name, remoteUrls = remotes)),
                 )
             }
 
@@ -65,14 +65,14 @@ fun Route.repositoryAdminRoutes(repositories: RepositoryService, users: UserServ
                     ?: return@put call.respond(HttpStatusCode.NotFound, mapOf("error" to "Repository not found"))
                 val request = call.receive<UpdateRepositoryRequest>()
 
-                val remote = request.remoteUrl?.let { url ->
+                val remotes = request.remoteUrls?.let { urls ->
                     if (repo.mode != RepositoryMode.PROXY) {
                         return@put call.respond(
                             HttpStatusCode.BadRequest,
-                            mapOf("error" to "Only proxy repositories have an upstream"),
+                            mapOf("error" to "Only proxy repositories have upstreams"),
                         )
                     }
-                    remoteUrl(url, repo.type) ?: return@put call.respond(
+                    remoteUrls(urls, repo.type) ?: return@put call.respond(
                         HttpStatusCode.BadRequest,
                         mapOf("error" to "Invalid upstream URL"),
                     )
@@ -81,7 +81,7 @@ fun Route.repositoryAdminRoutes(repositories: RepositoryService, users: UserServ
                     return@put call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid cache lifetime"))
                 }
 
-                repositories.update(repo.id, request.copy(remoteUrl = remote))
+                repositories.update(repo.id, request.copy(remoteUrls = remotes))
                 call.respond(repositories.findByName(repo.name)!!)
             }
 
@@ -129,13 +129,20 @@ fun Route.repositoryAdminRoutes(repositories: RepositoryService, users: UserServ
     }
 }
 
+/** Null when the list is empty or any entry is not a usable upstream. */
+private fun remoteUrls(values: List<String>, type: RepositoryType): List<String>? {
+    val cleaned = values.mapNotNull { remoteUrl(it, type) }
+    if (cleaned.isEmpty() || cleaned.size != values.count { it.isNotBlank() }) return null
+    return cleaned.distinct()
+}
+
 /**
  * Upstreams are stored without a trailing slash. Docker upstreams are the registry root rather than its API
  * root, because the `/v2/` prefix is part of every request the proxy makes — pasting it in is the obvious
  * mistake, so it is trimmed instead of rejected.
  */
-private fun remoteUrl(value: String?, type: RepositoryType): String? {
-    val trimmed = value?.trim()?.trimEnd('/')?.takeIf { it.isNotEmpty() } ?: return null
+private fun remoteUrl(value: String, type: RepositoryType): String? {
+    val trimmed = value.trim().trimEnd('/').takeIf { it.isNotEmpty() } ?: return null
     val uri = runCatching { URI(trimmed) }.getOrNull() ?: return null
     if (uri.scheme?.lowercase() !in setOf("http", "https") || uri.host.isNullOrBlank()) return null
     return if (type == RepositoryType.DOCKER) trimmed.removeSuffix("/v2") else trimmed

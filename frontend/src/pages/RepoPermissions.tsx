@@ -1,11 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { api, type Permission, type Repository, type RepositoryPermission } from '../api'
 import { navigate } from '../router'
-import { UPSTREAMS } from '../upstreams'
+import { UpstreamList } from '../components/UpstreamList'
+import { parseUpstreams } from '../upstreams'
 import { Button, Card, ErrorText, Input, PageHeading, PermissionBadge, Table, Td, Th } from '../ui'
 
 function MirrorSettings({ repository, onSaved }: { repository: Repository; onSaved: () => void }) {
-  const [remoteUrl, setRemoteUrl] = useState(repository.remoteUrl ?? '')
+  const [remotes, setRemotes] = useState(repository.remoteUrls.join('\n'))
   const [ttl, setTtl] = useState(String(repository.cacheTtlSeconds))
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
@@ -16,7 +17,7 @@ function MirrorSettings({ repository, onSaved }: { repository: Repository; onSav
     setStatus('')
     try {
       await api.updateRepository(repository.name, {
-        remoteUrl: remoteUrl.trim(),
+        remoteUrls: parseUpstreams(remotes),
         cacheTtlSeconds: Number(ttl),
       })
       setStatus('Saved.')
@@ -51,13 +52,9 @@ function MirrorSettings({ repository, onSaved }: { repository: Repository; onSav
           </p>
         </div>
 
+        <UpstreamList type={repository.type} value={remotes} onChange={setRemotes} />
+
         <div className="flex flex-wrap items-center gap-3">
-          <Input
-            placeholder="https://upstream-registry"
-            value={remoteUrl}
-            onChange={(e) => setRemoteUrl(e.target.value)}
-            className="max-w-lg"
-          />
           <label className="flex items-center gap-2 text-sm text-neutral-400">
             Lifetime
             <Input
@@ -75,19 +72,6 @@ function MirrorSettings({ repository, onSaved }: { repository: Repository; onSav
           </Button>
           {status && <p className="text-sm text-emerald-400">{status}</p>}
           <ErrorText>{error}</ErrorText>
-        </div>
-
-        <div className="flex flex-wrap gap-1">
-          {UPSTREAMS[repository.type].map((preset) => (
-            <button
-              key={preset.url}
-              type="button"
-              onClick={() => setRemoteUrl(preset.url)}
-              className="rounded border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400 transition-colors hover:border-neutral-600 hover:text-neutral-200"
-            >
-              {preset.label}
-            </button>
-          ))}
         </div>
       </form>
     </Card>

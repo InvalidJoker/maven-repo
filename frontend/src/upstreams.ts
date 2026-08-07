@@ -1,5 +1,13 @@
 import type { RepositoryType } from './api'
 
+/** Upstreams are edited as text, one per line, in the order a mirror consults them. */
+export function parseUpstreams(text: string): string[] {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+}
+
 /** Registries people usually mirror, offered as one-click presets when creating a mirror repository. */
 export const UPSTREAMS: Record<RepositoryType, { label: string; url: string }[]> = {
   MAVEN: [

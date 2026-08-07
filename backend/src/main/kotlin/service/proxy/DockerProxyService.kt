@@ -25,7 +25,8 @@ data class UpstreamBlob(val outcome: ProxyOutcome, val size: Long? = null)
 
 /**
  * OCI proxying, cached into exactly the layout a push produces (`blobs/…`, `images/<image>/manifests/…`,
- * `images/<image>/tags/<tag>`), so cached images browse and pull like local ones.
+ * `images/<image>/tags/<tag>`), so cached images browse and pull like local ones. Several upstreams are tried
+ * in the configured order and the first one holding the image wins.
  *
  * Manifests are content-addressed and cached forever; only the tag → digest mapping expires, because that is
  * the one thing that moves upstream.
@@ -39,89 +40,113 @@ class DockerProxyService(
     private val json = Json { ignoreUnknownKeys = true }
 
     suspend fun manifest(repo: RepositoryDto, image: String, reference: String): ProxyManifest {
-        val remote = repo.remoteUrl ?: return ProxyManifest.NotFound
         val digest = Digest.parseOrNull(reference)
-
         cached(repo, image, reference, digest, stale = false)?.let { return ProxyManifest.Found(it) }
 
-        val upstream = upstreamImage(remote, image)
-        val response = cache.fetch(
-            url = "${remote.trimEnd('/')}/v2/$upstream/manifests/$reference",
-            auth = auth.forImage(remote, upstream),
-            accept = MediaTypes.MANIFEST_TYPES.toList(),
-        )
+        var failed = false
+        for (remote in repo.remoteUrls) {
+            val upstream = upstreamImage(remote, image)
+            val response = cache.fetch(
+                url = "${remote.trimEnd('/')}/v2/$upstream/manifests/$reference",
+                auth = auth.forImage(remote, upstream),
+                accept = MediaTypes.MANIFEST_TYPES.toList(),
+            )
+            if (response == null) {
+                failed = true
+                continue
+            }
+            if (!response.successful) {
+                if (response.status !in UNAVAILABLE_UPSTREAM) failed = true
+                continue
+            }
 
-        if (response == null || !response.successful) {
-            // Keep serving what we have when the upstream is unreachable or rate-limiting us.
-            cached(repo, image, reference, digest, stale = true)?.let { return ProxyManifest.Found(it) }
-            return if (response?.status == HttpStatusCode.NotFound) ProxyManifest.NotFound else ProxyManifest.Error
+            val bytes = response.body
+            val actual = Digest.of(bytes)
+            if (digest != null && digest != actual) {
+                failed = true
+                continue
+            }
+
+            val mediaType = response.headers[HttpHeaders.ContentType]?.substringBefore(';')?.trim()
+                ?.takeIf { it in MediaTypes.MANIFEST_TYPES }
+                ?: MediaTypes.OCI_MANIFEST
+            registry.storeManifest(repo.name, image, actual, mediaType, bytes)
+            if (digest == null) registry.storeTag(repo.name, image, reference, actual)
+            return ProxyManifest.Found(DockerRegistryService.Manifest(actual, mediaType, bytes))
         }
 
-        val bytes = response.body
-        val actual = Digest.of(bytes)
-        if (digest != null && digest != actual) return ProxyManifest.Error
-
-        val mediaType = response.headers[HttpHeaders.ContentType]?.substringBefore(';')?.trim()
-            ?.takeIf { it in MediaTypes.MANIFEST_TYPES }
-            ?: MediaTypes.OCI_MANIFEST
-        registry.storeManifest(repo.name, image, actual, mediaType, bytes)
-        if (digest == null) registry.storeTag(repo.name, image, reference, actual)
-
-        return ProxyManifest.Found(DockerRegistryService.Manifest(actual, mediaType, bytes))
+        // Keep serving what we have when the upstreams are unreachable or rate-limiting us.
+        cached(repo, image, reference, digest, stale = true)?.let { return ProxyManifest.Found(it) }
+        return if (failed) ProxyManifest.Error else ProxyManifest.NotFound
     }
 
+    /** Blobs are content-addressed, so any upstream that has the digest serves the same bytes. */
     suspend fun blob(call: ApplicationCall, repo: RepositoryDto, image: String, digest: Digest): ProxyOutcome {
-        val remote = repo.remoteUrl ?: return ProxyOutcome.NOT_FOUND
-
         registry.readBlob(repo.name, digest)?.let {
             call.respondStorageObject(it, ContentType.Application.OctetStream)
             return ProxyOutcome.SERVED
         }
 
-        val upstream = upstreamImage(remote, image)
-        return cache.stream(
-            call = call,
-            repository = repo.name,
-            path = DockerLayout.blob(digest),
-            url = "${remote.trimEnd('/')}/v2/$upstream/blobs/$digest",
-            contentType = ContentType.Application.OctetStream,
-            auth = auth.forImage(remote, upstream),
-            headers = mapOf("Docker-Content-Digest" to digest.toString()),
-        )
+        var failed = false
+        for (remote in repo.remoteUrls) {
+            val upstream = upstreamImage(remote, image)
+            val outcome = cache.stream(
+                call = call,
+                repository = repo.name,
+                path = DockerLayout.blob(digest),
+                url = "${remote.trimEnd('/')}/v2/$upstream/blobs/$digest",
+                contentType = ContentType.Application.OctetStream,
+                auth = auth.forImage(remote, upstream),
+                headers = mapOf("Docker-Content-Digest" to digest.toString()),
+            )
+            when (outcome) {
+                ProxyOutcome.NOT_FOUND -> Unit
+                ProxyOutcome.UPSTREAM_ERROR -> failed = true
+                else -> return outcome
+            }
+        }
+        return if (failed) ProxyOutcome.UPSTREAM_ERROR else ProxyOutcome.NOT_FOUND
     }
 
     /** Answers `HEAD` for a blob without pulling the layer. */
     suspend fun blobHead(repo: RepositoryDto, image: String, digest: Digest): UpstreamBlob {
-        val remote = repo.remoteUrl ?: return UpstreamBlob(ProxyOutcome.NOT_FOUND)
-        val upstream = upstreamImage(remote, image)
-        val response = cache.fetch(
-            url = "${remote.trimEnd('/')}/v2/$upstream/blobs/$digest",
-            auth = auth.forImage(remote, upstream),
-            method = HttpMethod.Head,
-        ) ?: return UpstreamBlob(ProxyOutcome.UPSTREAM_ERROR)
+        var failed = false
+        for (remote in repo.remoteUrls) {
+            val upstream = upstreamImage(remote, image)
+            val response = cache.fetch(
+                url = "${remote.trimEnd('/')}/v2/$upstream/blobs/$digest",
+                auth = auth.forImage(remote, upstream),
+                method = HttpMethod.Head,
+            )
+            when {
+                response == null -> failed = true
 
-        return when {
-            response.successful ->
-                UpstreamBlob(ProxyOutcome.SERVED, response.headers[HttpHeaders.ContentLength]?.toLongOrNull())
+                response.successful -> return UpstreamBlob(
+                    ProxyOutcome.SERVED,
+                    response.headers[HttpHeaders.ContentLength]?.toLongOrNull(),
+                )
 
-            response.status == HttpStatusCode.NotFound -> UpstreamBlob(ProxyOutcome.NOT_FOUND)
-            else -> UpstreamBlob(ProxyOutcome.UPSTREAM_ERROR)
+                response.status !in UNAVAILABLE_UPSTREAM -> failed = true
+            }
         }
+        return UpstreamBlob(if (failed) ProxyOutcome.UPSTREAM_ERROR else ProxyOutcome.NOT_FOUND)
     }
 
-    /** Upstream tag list, falling back to the tags of whatever has been cached so far. */
+    /** Tags from the first upstream that knows the image, falling back to what has been cached so far. */
     suspend fun tags(repo: RepositoryDto, image: String): List<String> {
-        val remote = repo.remoteUrl ?: return emptyList()
-        val upstream = upstreamImage(remote, image)
-        val response = cache.fetch(
-            url = "${remote.trimEnd('/')}/v2/$upstream/tags/list",
-            auth = auth.forImage(remote, upstream),
-            accept = listOf(ContentType.Application.Json.toString()),
-        )
-        val tags = response?.takeIf { it.successful }
-            ?.let { runCatching { json.decodeFromString(UpstreamTags.serializer(), it.body.decodeToString()) }.getOrNull() }
-            ?: return registry.listTags(repo.name, image)
-        return tags.tags.sorted()
+        for (remote in repo.remoteUrls) {
+            val upstream = upstreamImage(remote, image)
+            val response = cache.fetch(
+                url = "${remote.trimEnd('/')}/v2/$upstream/tags/list",
+                auth = auth.forImage(remote, upstream),
+                accept = listOf(ContentType.Application.Json.toString()),
+            ) ?: continue
+            if (!response.successful) continue
+            runCatching { json.decodeFromString(UpstreamTags.serializer(), response.body.decodeToString()) }
+                .getOrNull()
+                ?.let { return it.tags.sorted() }
+        }
+        return registry.listTags(repo.name, image)
     }
 
     private suspend fun cached(

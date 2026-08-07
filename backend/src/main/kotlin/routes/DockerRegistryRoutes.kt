@@ -438,7 +438,7 @@ private class DockerRegistryApi(
                 call.ociError(
                     HttpStatusCode.MethodNotAllowed,
                     "DENIED",
-                    "${repo.name} mirrors ${repo.remoteUrl} and cannot be pushed to",
+                    "${repo.name} mirrors ${repo.remoteUrls.joinToString(", ")} and cannot be pushed to",
                 )
                 null
             } else {

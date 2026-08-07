@@ -45,6 +45,17 @@ fun interface UpstreamAuth {
 
 private const val MAX_REDIRECTS = 5
 
+/**
+ * Statuses that mean "this upstream does not serve that": registries routinely answer `401`/`403` for what
+ * they do not have, since they cannot say whether the caller may know it exists. For a repository with
+ * several upstreams they are all the same answer — ask the next one.
+ */
+val UNAVAILABLE_UPSTREAM: Set<HttpStatusCode> = setOf(
+    HttpStatusCode.NotFound,
+    HttpStatusCode.Unauthorized,
+    HttpStatusCode.Forbidden,
+)
+
 /** Upstream 404s are remembered briefly: Maven clients ask for `.sha256`, `.asc` and `.module` files constantly. */
 private val MISS_TTL: Duration = Duration.ofMinutes(5)
 private const val MAX_MISSES = 20_000
@@ -91,7 +102,8 @@ class ProxyCache(private val client: HttpClient, private val storage: StorageBac
         return false
     }
 
-    private fun rememberMiss(repository: String, path: String) {
+    /** Recorded by the caller once *every* upstream has said no, not per request. */
+    fun rememberMiss(repository: String, path: String) {
         if (misses.size > MAX_MISSES) misses.clear()
         misses["$repository|$path"] = Instant.now().plus(MISS_TTL)
     }
@@ -134,10 +146,7 @@ class ProxyCache(private val client: HttpClient, private val storage: StorageBac
         return try {
             request(url, HttpMethod.Get, auth, accept) { response ->
                 when {
-                    response.status == HttpStatusCode.NotFound -> {
-                        rememberMiss(repository, path)
-                        ProxyOutcome.NOT_FOUND
-                    }
+                    response.status in UNAVAILABLE_UPSTREAM -> ProxyOutcome.NOT_FOUND
 
                     !response.status.isSuccess() -> {
                         logger.warn("Upstream {} answered {}", url, response.status)

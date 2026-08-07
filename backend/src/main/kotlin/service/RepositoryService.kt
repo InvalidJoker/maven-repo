@@ -33,7 +33,7 @@ class RepositoryService(private val db: DatabaseService) {
             it[private] = request.private
             it[type] = request.type
             it[mode] = request.mode
-            it[remoteUrl] = request.remoteUrl
+            it[remoteUrls] = request.remoteUrls.joinToString("\n").takeIf { urls -> urls.isNotEmpty() }
             it[cacheTtlSeconds] = request.cacheTtlSeconds
         }
         RepositoryDto(
@@ -42,7 +42,7 @@ class RepositoryService(private val db: DatabaseService) {
             private = request.private,
             type = request.type,
             mode = request.mode,
-            remoteUrl = request.remoteUrl,
+            remoteUrls = request.remoteUrls,
             cacheTtlSeconds = request.cacheTtlSeconds,
         )
     }
@@ -51,7 +51,7 @@ class RepositoryService(private val db: DatabaseService) {
         db.query {
             RepositoryTable.update({ RepositoryTable.id eq repoId }) {
                 request.private?.let { value -> it[private] = value }
-                request.remoteUrl?.let { value -> it[remoteUrl] = value }
+                request.remoteUrls?.let { value -> it[remoteUrls] = value.joinToString("\n") }
                 request.cacheTtlSeconds?.let { value -> it[cacheTtlSeconds] = value }
             }
         }
@@ -146,10 +146,10 @@ class RepositoryService(private val db: DatabaseService) {
         private = this[RepositoryTable.private],
         type = this[RepositoryTable.type],
         mode = this[RepositoryTable.mode],
-        remoteUrl = this[RepositoryTable.remoteUrl],
+        remoteUrls = this[RepositoryTable.remoteUrls]?.lines()?.filter { it.isNotBlank() }.orEmpty(),
         cacheTtlSeconds = this[RepositoryTable.cacheTtlSeconds],
     )
 }
 
 fun RepositoryDto.forUser(permission: Permission) =
-    UserRepositoryDto(name, private, permission, type, mode, remoteUrl, cacheTtlSeconds)
+    UserRepositoryDto(name, private, permission, type, mode, remoteUrls, cacheTtlSeconds)

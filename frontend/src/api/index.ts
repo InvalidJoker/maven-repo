@@ -180,14 +180,14 @@ export const api = {
     private: boolean;
     type: RepositoryType;
     mode: RepositoryMode;
-    remoteUrl?: string;
+    remoteUrls?: string[];
     cacheTtlSeconds?: number;
   }) => request<Repository>("POST", "/api/repositories", repository),
   updateRepository: (
     repo: string,
     changes: {
       private?: boolean;
-      remoteUrl?: string;
+      remoteUrls?: string[];
       cacheTtlSeconds?: number;
     },
   ) =>

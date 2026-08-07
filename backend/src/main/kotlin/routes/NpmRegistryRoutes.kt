@@ -282,7 +282,7 @@ private class NpmRegistryApi(
                 if (required == Permission.WRITE && repo.mode == RepositoryMode.PROXY) {
                     call.npmError(
                         HttpStatusCode.MethodNotAllowed,
-                        "$name mirrors ${repo.remoteUrl} and cannot be published to",
+                        "$name mirrors ${repo.remoteUrls.joinToString(", ")} and cannot be published to",
                     )
                     null
                 } else {

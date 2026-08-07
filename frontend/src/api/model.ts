@@ -17,7 +17,8 @@ export interface Repository {
   private: boolean;
   type: RepositoryType;
   mode: RepositoryMode;
-  remoteUrl: string | null;
+  /** Upstreams of a mirror, consulted in order until one has what was asked for. */
+  remoteUrls: string[];
   cacheTtlSeconds: number;
 }
 
@@ -27,7 +28,7 @@ export interface UserRepository {
   permission: Permission;
   type: RepositoryType;
   mode: RepositoryMode;
-  remoteUrl: string | null;
+  remoteUrls: string[];
   cacheTtlSeconds: number;
 }
 

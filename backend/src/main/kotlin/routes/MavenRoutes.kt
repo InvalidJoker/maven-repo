@@ -77,7 +77,7 @@ private suspend fun ApplicationCall.authorize(access: RepositoryAccess, required
             if (required == Permission.WRITE && repository.mode == RepositoryMode.PROXY) {
                 respond(
                     HttpStatusCode.MethodNotAllowed,
-                    mapOf("error" to "$repoName mirrors ${repository.remoteUrl} and cannot be published to"),
+                    mapOf("error" to "$repoName mirrors ${repository.remoteUrls.joinToString(", ")} and cannot be published to"),
                 )
                 null
             } else {

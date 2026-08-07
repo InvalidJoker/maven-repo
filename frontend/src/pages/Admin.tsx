@@ -2,7 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { api, type Repository, type RepositoryMode, type RepositoryType } from '../api'
 import { navigate } from '../router'
 import { AdminNav } from '../components/AdminNav'
-import { UPSTREAMS } from '../upstreams'
+import { UpstreamList } from '../components/UpstreamList'
+import { parseUpstreams } from '../upstreams'
 import {
   Button,
   Card,
@@ -37,7 +38,7 @@ export function Admin() {
   const [name, setName] = useState('')
   const [type, setType] = useState<RepositoryType>('MAVEN')
   const [mode, setMode] = useState<RepositoryMode>('HOSTED')
-  const [remoteUrl, setRemoteUrl] = useState('')
+  const [remotes, setRemotes] = useState('')
   const [isPrivate, setPrivate] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -59,10 +60,10 @@ export function Admin() {
         private: isPrivate,
         type,
         mode,
-        remoteUrl: mode === 'PROXY' ? remoteUrl.trim() : undefined,
+        remoteUrls: mode === 'PROXY' ? parseUpstreams(remotes) : undefined,
       })
       setName('')
-      setRemoteUrl('')
+      setRemotes('')
       setPrivate(false)
       reload()
     } catch (err) {
@@ -130,25 +131,8 @@ export function Admin() {
           </div>
 
           {mode === 'PROXY' && (
-            <div className="space-y-2 border-t border-neutral-800 pt-3">
-              <Input
-                placeholder="https://upstream-registry"
-                value={remoteUrl}
-                onChange={(e) => setRemoteUrl(e.target.value)}
-                className="max-w-lg"
-              />
-              <div className="flex flex-wrap gap-1">
-                {UPSTREAMS[type].map((preset) => (
-                  <button
-                    key={preset.url}
-                    type="button"
-                    onClick={() => setRemoteUrl(preset.url)}
-                    className="rounded border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400 transition-colors hover:border-neutral-600 hover:text-neutral-200"
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
+            <div className="border-t border-neutral-800 pt-3">
+              <UpstreamList type={type} value={remotes} onChange={setRemotes} />
             </div>
           )}
 
@@ -182,11 +166,11 @@ export function Admin() {
             <tr key={repo.name} className="hover:bg-neutral-900">
               <Td className="font-medium text-neutral-100">
                 {repo.name}
-                {repo.remoteUrl && (
-                  <span className="mt-0.5 block truncate text-xs font-normal text-neutral-500">
-                    → {repo.remoteUrl}
+                {repo.remoteUrls?.map((url) => (
+                  <span key={url} className="mt-0.5 block truncate text-xs font-normal text-neutral-500">
+                    → {url}
                   </span>
-                )}
+                ))}
               </Td>
               <Td>
                 <div className="flex items-center gap-1.5">
