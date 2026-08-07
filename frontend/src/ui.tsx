@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
-import type { Permission, RepositoryType } from './api'
+import type { Permission, RepositoryMode, RepositoryType } from './api'
 
 type Variant = 'primary' | 'ghost' | 'danger'
 
@@ -68,6 +68,11 @@ export function VisibilityBadge({ isPrivate }: { isPrivate: boolean }) {
 export function TypeBadge({ type }: { type: RepositoryType }) {
   const tones: Record<RepositoryType, Tone> = { MAVEN: 'neutral', DOCKER: 'sky', NPM: 'rose' }
   return <Badge tone={tones[type]}>{type.toLowerCase()}</Badge>
+}
+
+export function ModeBadge({ mode }: { mode: RepositoryMode }) {
+  if (mode !== 'PROXY') return null
+  return <Badge tone="amber">mirror</Badge>
 }
 
 export function Table({ head, children }: { head: ReactNode; children: ReactNode }) {

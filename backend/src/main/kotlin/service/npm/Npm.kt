@@ -37,6 +37,8 @@ data class StoredPackument(
     val distTags: Map<String, String> = emptyMap(),
     val versions: Map<String, JsonObject> = emptyMap(),
     val time: Map<String, String> = emptyMap(),
+    /** Where each tarball file name is fetched from, for packuments mirrored by a proxy repository. */
+    val remote: Map<String, String> = emptyMap(),
 ) {
     val latest: String? get() = distTags["latest"] ?: versions.keys.maxWithOrNull(VERSION_ORDER)
 

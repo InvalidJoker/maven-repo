@@ -1,12 +1,14 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { api, type Repository, type RepositoryType } from '../api'
+import { api, type Repository, type RepositoryMode, type RepositoryType } from '../api'
 import { navigate } from '../router'
 import { AdminNav } from '../components/AdminNav'
+import { UPSTREAMS } from '../upstreams'
 import {
   Button,
   Card,
   ErrorText,
   Input,
+  ModeBadge,
   PageHeading,
   Table,
   Td,
@@ -21,10 +23,21 @@ const TYPES: { id: RepositoryType; label: string; hint: string }[] = [
   { id: 'NPM', label: 'npm', hint: 'Served at /npm/<repository> for npm, pnpm, yarn and bun.' },
 ]
 
+const MODES: { id: RepositoryMode; label: string; hint: string }[] = [
+  { id: 'HOSTED', label: 'Hosted', hint: 'Holds what is published to it.' },
+  {
+    id: 'PROXY',
+    label: 'Mirror',
+    hint: 'Read-only. Passes requests on to an upstream registry and caches every artifact it hands out.',
+  },
+]
+
 export function Admin() {
   const [repos, setRepos] = useState<Repository[]>([])
   const [name, setName] = useState('')
   const [type, setType] = useState<RepositoryType>('MAVEN')
+  const [mode, setMode] = useState<RepositoryMode>('HOSTED')
+  const [remoteUrl, setRemoteUrl] = useState('')
   const [isPrivate, setPrivate] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -41,8 +54,15 @@ export function Admin() {
     setBusy(true)
     setError('')
     try {
-      await api.createRepository(name.trim(), isPrivate, type)
+      await api.createRepository({
+        name: name.trim(),
+        private: isPrivate,
+        type,
+        mode,
+        remoteUrl: mode === 'PROXY' ? remoteUrl.trim() : undefined,
+      })
       setName('')
+      setRemoteUrl('')
       setPrivate(false)
       reload()
     } catch (err) {
@@ -80,6 +100,20 @@ export function Admin() {
                 </button>
               ))}
             </div>
+            <div className="flex gap-1">
+              {MODES.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setMode(option.id)}
+                  className={`rounded px-2 py-1 text-xs transition-colors ${
+                    mode === option.id ? 'bg-brand-500 text-white' : 'text-neutral-400 hover:bg-neutral-800'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
             <label className="flex items-center gap-2 text-sm text-neutral-300">
               <input
                 type="checkbox"
@@ -94,7 +128,33 @@ export function Admin() {
             </Button>
             <ErrorText>{error}</ErrorText>
           </div>
-          <p className="text-xs text-neutral-500">{TYPES.find((t) => t.id === type)?.hint}</p>
+
+          {mode === 'PROXY' && (
+            <div className="space-y-2 border-t border-neutral-800 pt-3">
+              <Input
+                placeholder="https://upstream-registry"
+                value={remoteUrl}
+                onChange={(e) => setRemoteUrl(e.target.value)}
+                className="max-w-lg"
+              />
+              <div className="flex flex-wrap gap-1">
+                {UPSTREAMS[type].map((preset) => (
+                  <button
+                    key={preset.url}
+                    type="button"
+                    onClick={() => setRemoteUrl(preset.url)}
+                    className="rounded border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400 transition-colors hover:border-neutral-600 hover:text-neutral-200"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <p className="text-xs text-neutral-500">
+            {TYPES.find((t) => t.id === type)?.hint} {MODES.find((m) => m.id === mode)?.hint}
+          </p>
         </form>
       </Card>
 
@@ -119,10 +179,20 @@ export function Admin() {
           </tr>
         ) : (
           repos.map((repo) => (
-            <tr key={repo.id} className="hover:bg-neutral-900">
-              <Td className="font-medium text-neutral-100">{repo.name}</Td>
+            <tr key={repo.name} className="hover:bg-neutral-900">
+              <Td className="font-medium text-neutral-100">
+                {repo.name}
+                {repo.remoteUrl && (
+                  <span className="mt-0.5 block truncate text-xs font-normal text-neutral-500">
+                    → {repo.remoteUrl}
+                  </span>
+                )}
+              </Td>
               <Td>
-                <TypeBadge type={repo.type} />
+                <div className="flex items-center gap-1.5">
+                  <TypeBadge type={repo.type} />
+                  <ModeBadge mode={repo.mode} />
+                </div>
               </Td>
               <Td>
                 <VisibilityBadge isPrivate={repo.private} />
@@ -132,7 +202,7 @@ export function Admin() {
                   variant="ghost"
                   onClick={() => navigate(`/admin/repos/${encodeURIComponent(repo.name)}`)}
                 >
-                  Manage access
+                  Manage
                 </Button>
               </Td>
             </tr>

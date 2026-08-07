@@ -95,7 +95,7 @@ class NpmRegistryService(private val storage: StorageBackend) {
         times["created"] = stored.time["created"] ?: now
         times["modified"] = now
 
-        write(repository, StoredPackument(name, distTags, newVersions, times))
+        store(repository, StoredPackument(name, distTags, newVersions, times))
         PublishResult.Published(published)
     }
 
@@ -103,14 +103,14 @@ class NpmRegistryService(private val storage: StorageBackend) {
         withLock(repository, name) {
             val stored = packument(repository, name) ?: return@withLock false
             if (!stored.versions.containsKey(version)) return@withLock false
-            write(repository, stored.copy(distTags = stored.distTags + (tag to version)))
+            store(repository, stored.copy(distTags = stored.distTags + (tag to version)))
             true
         }
 
     suspend fun deleteDistTag(repository: String, name: String, tag: String): Boolean = withLock(repository, name) {
         val stored = packument(repository, name) ?: return@withLock false
         if (tag == "latest" || !stored.distTags.containsKey(tag)) return@withLock false
-        write(repository, stored.copy(distTags = stored.distTags - tag))
+        store(repository, stored.copy(distTags = stored.distTags - tag))
         true
     }
 
@@ -129,7 +129,7 @@ class NpmRegistryService(private val storage: StorageBackend) {
         if (!distTags.containsKey("latest")) {
             versions.keys.maxWithOrNull(VERSION_ORDER)?.let { distTags["latest"] = it }
         }
-        write(repository, stored.copy(distTags = distTags, versions = versions, time = stored.time - version))
+        store(repository, stored.copy(distTags = distTags, versions = versions, time = stored.time - version))
         true
     }
 
@@ -154,7 +154,7 @@ class NpmRegistryService(private val storage: StorageBackend) {
         return names.sorted()
     }
 
-    private suspend fun write(repository: String, packument: StoredPackument) {
+    suspend fun store(repository: String, packument: StoredPackument) {
         val json = npmJson.encodeToString(StoredPackument.serializer(), packument)
         storage.write(repository, NpmLayout.packument(packument.name), json.toByteArray().inputStream())
     }

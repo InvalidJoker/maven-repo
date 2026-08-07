@@ -1,10 +1,102 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { api, type Permission, type RepositoryPermission } from '../api'
+import { api, type Permission, type Repository, type RepositoryPermission } from '../api'
 import { navigate } from '../router'
+import { UPSTREAMS } from '../upstreams'
 import { Button, Card, ErrorText, Input, PageHeading, PermissionBadge, Table, Td, Th } from '../ui'
+
+function MirrorSettings({ repository, onSaved }: { repository: Repository; onSaved: () => void }) {
+  const [remoteUrl, setRemoteUrl] = useState(repository.remoteUrl ?? '')
+  const [ttl, setTtl] = useState(String(repository.cacheTtlSeconds))
+  const [status, setStatus] = useState('')
+  const [error, setError] = useState('')
+
+  const onSave = async (event: FormEvent) => {
+    event.preventDefault()
+    setError('')
+    setStatus('')
+    try {
+      await api.updateRepository(repository.name, {
+        remoteUrl: remoteUrl.trim(),
+        cacheTtlSeconds: Number(ttl),
+      })
+      setStatus('Saved.')
+      onSaved()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save')
+    }
+  }
+
+  const onClear = async () => {
+    if (!confirm(`Delete everything ${repository.name} has mirrored so far?`)) return
+    setError('')
+    setStatus('')
+    try {
+      await api.clearRepositoryCache(repository.name)
+      setStatus('Cache cleared.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to clear the cache')
+    }
+  }
+
+  return (
+    <Card className="mb-6 p-4">
+      <form onSubmit={onSave} className="space-y-3">
+        <div>
+          <h2 className="text-sm font-medium text-neutral-200">Mirror</h2>
+          <p className="mt-1 text-xs text-neutral-500">
+            Requests this repository cannot answer are passed on to the upstream and cached. Released artifacts,
+            layers and tarballs are kept indefinitely; the lifetime below only applies to what changes upstream —
+            <code className="mx-1 text-neutral-400">maven-metadata.xml</code> and snapshots, packuments, and Docker
+            tags.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Input
+            placeholder="https://upstream-registry"
+            value={remoteUrl}
+            onChange={(e) => setRemoteUrl(e.target.value)}
+            className="max-w-lg"
+          />
+          <label className="flex items-center gap-2 text-sm text-neutral-400">
+            Lifetime
+            <Input
+              type="number"
+              min={0}
+              value={ttl}
+              onChange={(e) => setTtl(e.target.value)}
+              className="max-w-24"
+            />
+            seconds
+          </label>
+          <Button type="submit">Save</Button>
+          <Button type="button" variant="danger" onClick={onClear}>
+            Clear cache
+          </Button>
+          {status && <p className="text-sm text-emerald-400">{status}</p>}
+          <ErrorText>{error}</ErrorText>
+        </div>
+
+        <div className="flex flex-wrap gap-1">
+          {UPSTREAMS[repository.type].map((preset) => (
+            <button
+              key={preset.url}
+              type="button"
+              onClick={() => setRemoteUrl(preset.url)}
+              className="rounded border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400 transition-colors hover:border-neutral-600 hover:text-neutral-200"
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+      </form>
+    </Card>
+  )
+}
 
 export function RepoPermissions({ repo }: { repo: string }) {
   const [permissions, setPermissions] = useState<RepositoryPermission[]>([])
+  const [info, setInfo] = useState<Repository | null>(null)
   const [username, setUsername] = useState('')
   const [permission, setPermission] = useState<Permission>('READ')
   const [error, setError] = useState('')
@@ -14,6 +106,10 @@ export function RepoPermissions({ repo }: { repo: string }) {
       .permissions(repo)
       .then(setPermissions)
       .catch(() => setError('Failed to load permissions'))
+    api
+      .repositories()
+      .then((all) => setInfo(all.find((entry) => entry.name === repo) ?? null))
+      .catch(() => setError('Failed to load repository'))
   }
 
   useEffect(reload, [repo])
@@ -42,6 +138,8 @@ export function RepoPermissions({ repo }: { repo: string }) {
         ← Back to repositories
       </button>
       <PageHeading title={`Access · ${repo}`} subtitle="Grant users read or write access to this repository." />
+
+      {info?.mode === 'PROXY' && <MirrorSettings repository={info} onSaved={reload} />}
 
       <Card className="mb-6 p-4">
         <form onSubmit={onGrant} className="flex flex-wrap items-center gap-3">

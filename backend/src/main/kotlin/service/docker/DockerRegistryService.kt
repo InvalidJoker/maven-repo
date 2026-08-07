@@ -84,16 +84,27 @@ class DockerRegistryService(private val storage: StorageBackend) {
         val manifest = parseManifest(bytes) ?: return PutManifestResult.Invalid("Manifest is not valid JSON")
         missingReference(repository, image, manifest)?.let { return PutManifestResult.MissingBlob(it) }
 
+        storeManifest(repository, image, digest, mediaType, bytes)
+        if (requested == null) storeTag(repository, image, reference, digest)
+        return PutManifestResult.Stored(digest)
+    }
+
+    /**
+     * Stores a manifest as it arrived, without checking that its blobs are present. Pushes go through
+     * [putManifest], which does check; a proxy repository caches the manifest first and pulls the blobs the
+     * client actually asks for afterwards.
+     */
+    suspend fun storeManifest(repository: String, image: String, digest: Digest, mediaType: String, bytes: ByteArray) {
         storage.write(repository, DockerLayout.manifest(image, digest), bytes.inputStream())
         storage.write(
             repository,
             DockerLayout.manifestMediaType(image, digest),
             mediaType.toByteArray().inputStream(),
         )
-        if (requested == null) {
-            storage.write(repository, DockerLayout.tag(image, reference), digest.toString().toByteArray().inputStream())
-        }
-        return PutManifestResult.Stored(digest)
+    }
+
+    suspend fun storeTag(repository: String, image: String, tag: String, digest: Digest) {
+        storage.write(repository, DockerLayout.tag(image, tag), digest.toString().toByteArray().inputStream())
     }
 
     /** Removes a manifest and every tag pointing at it. */

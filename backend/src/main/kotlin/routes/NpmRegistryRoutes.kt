@@ -5,10 +5,14 @@ import de.joker.auth.Permission
 import de.joker.auth.RepoAccess
 import de.joker.auth.RepositoryAccess
 import de.joker.model.RepositoryDto
+import de.joker.model.RepositoryMode
 import de.joker.model.RepositoryType
 import de.joker.service.UserService
 import de.joker.service.npm.NpmRegistryService
 import de.joker.service.npm.StoredPackument
+import de.joker.service.proxy.NpmProxyService
+import de.joker.service.proxy.ProxyPackument
+import de.joker.service.proxy.ProxyOutcome
 import de.joker.service.npm.isValidPackageName
 import de.joker.service.npm.isValidTarballName
 import io.ktor.http.*
@@ -34,8 +38,13 @@ private const val MAX_PUBLISH_BYTES = 64 * 1024 * 1024
  * be scoped (`@scope/pkg`, sent either as two segments or with the slash percent-encoded). Everything therefore
  * goes through one tailcard route and is split here.
  */
-fun Route.npmRegistryRoutes(access: RepositoryAccess, registry: NpmRegistryService, users: UserService) {
-    val api = NpmRegistryApi(access, registry, users)
+fun Route.npmRegistryRoutes(
+    access: RepositoryAccess,
+    registry: NpmRegistryService,
+    users: UserService,
+    proxy: NpmProxyService,
+) {
+    val api = NpmRegistryApi(access, registry, users, proxy)
 
     route("/npm/{repo}") {
         get("/{path...}") { api.onGet(call, call.npmSegments()) }
@@ -86,6 +95,7 @@ private class NpmRegistryApi(
     private val access: RepositoryAccess,
     private val registry: NpmRegistryService,
     private val users: UserService,
+    private val proxy: NpmProxyService,
 ) {
 
     suspend fun onGet(call: ApplicationCall, segments: List<String>) {
@@ -125,17 +135,31 @@ private class NpmRegistryApi(
 
     private suspend fun packument(call: ApplicationCall, name: String) {
         val repo = authorize(call, Permission.READ) ?: return
-        if (!isValidPackageName(name)) return call.npmError(HttpStatusCode.BadRequest, "Invalid package name")
 
-        val stored = registry.packument(repo.name, name)
-        if (stored != null) return call.respondJson(stored.toPackument(call.tarballBase(repo.name, name)))
+        // `npm view pkg@1.0.0` and `npm install pkg@tag` request a single version document, whose path is the
+        // package name with a reference appended — not a package name itself, so both spellings are accepted.
+        val parent = name.substringBeforeLast('/', "").takeIf { it.isNotEmpty() && isValidPackageName(it) }
+        if (!isValidPackageName(name) && parent == null) {
+            return call.npmError(HttpStatusCode.BadRequest, "Invalid package name")
+        }
 
-        // `npm view pkg@1.0.0` and `npm install pkg@tag` also request a single version document.
-        val parent = name.substringBeforeLast('/', "")
+        if (isValidPackageName(name)) {
+            when (val result = packumentOf(repo, name)) {
+                is ProxyPackument.Found ->
+                    return call.respondJson(result.packument.toPackument(call.tarballBase(repo.name, name)))
+
+                ProxyPackument.Error -> return call.upstreamUnavailable()
+                // Not a package: it may still be a `<package>/<version>` path, handled below.
+                ProxyPackument.NotFound -> Unit
+            }
+        }
+
         val reference = name.substringAfterLast('/')
-        val parentPackument = parent.takeIf { it.isNotEmpty() && isValidPackageName(it) }
-            ?.let { registry.packument(repo.name, it) }
-            ?: return call.npmError(HttpStatusCode.NotFound, "Package not found")
+        val parentPackument = when (val result = parent?.let { packumentOf(repo, it) }) {
+            is ProxyPackument.Found -> result.packument
+            ProxyPackument.Error -> return call.upstreamUnavailable()
+            else -> return call.npmError(HttpStatusCode.NotFound, "Package not found")
+        }
 
         val version = parentPackument.distTags[reference] ?: reference
         val manifest = parentPackument.versions[version]
@@ -148,10 +172,29 @@ private class NpmRegistryApi(
         if (!isValidPackageName(target.name) || !isValidTarballName(target.file)) {
             return call.npmError(HttpStatusCode.BadRequest, "Invalid tarball path")
         }
+
+        if (repo.mode == RepositoryMode.PROXY) {
+            return when (proxy.tarball(call, repo, target.name, target.file)) {
+                // SERVED and ABORTED have both already written to the response.
+                ProxyOutcome.SERVED, ProxyOutcome.ABORTED -> Unit
+                ProxyOutcome.NOT_FOUND -> call.npmError(HttpStatusCode.NotFound, "Tarball not found")
+                ProxyOutcome.UPSTREAM_ERROR ->
+                    call.npmError(HttpStatusCode.BadGateway, "Upstream registry is unavailable")
+            }
+        }
+
         val obj = registry.tarball(repo.name, target.name, target.file)
             ?: return call.npmError(HttpStatusCode.NotFound, "Tarball not found")
         call.respondStorageObject(obj, ContentType.Application.OctetStream)
     }
+
+    /** A proxy repository answers metadata from its mirror of the upstream; a hosted one from what was published. */
+    private suspend fun packumentOf(repo: RepositoryDto, name: String): ProxyPackument =
+        if (repo.mode == RepositoryMode.PROXY) {
+            proxy.packument(repo, name)
+        } else {
+            registry.packument(repo.name, name)?.let { ProxyPackument.Found(it) } ?: ProxyPackument.NotFound
+        }
 
     private suspend fun publish(call: ApplicationCall, name: String) {
         val repo = authorize(call, Permission.WRITE) ?: return
@@ -191,8 +234,11 @@ private class NpmRegistryApi(
 
     private suspend fun distTags(call: ApplicationCall, name: String) {
         val repo = authorize(call, Permission.READ) ?: return
-        val stored = registry.packument(repo.name, name)
-            ?: return call.npmError(HttpStatusCode.NotFound, "Package not found")
+        val stored = when (val result = packumentOf(repo, name)) {
+            is ProxyPackument.Found -> result.packument
+            ProxyPackument.Error -> return call.upstreamUnavailable()
+            ProxyPackument.NotFound -> return call.npmError(HttpStatusCode.NotFound, "Package not found")
+        }
         call.respondJson(
             JsonObject(stored.distTags.mapValues { (_, version) -> JsonPrimitive(version) }),
         )
@@ -231,7 +277,18 @@ private class NpmRegistryApi(
     private suspend fun authorize(call: ApplicationCall, required: Permission): RepositoryDto? {
         val name = call.parameters["repo"]!!
         return when (val result = access.check(call, name, required, RepositoryType.NPM)) {
-            is RepoAccess.Granted -> result.repository
+            is RepoAccess.Granted -> {
+                val repo = result.repository
+                if (required == Permission.WRITE && repo.mode == RepositoryMode.PROXY) {
+                    call.npmError(
+                        HttpStatusCode.MethodNotAllowed,
+                        "$name mirrors ${repo.remoteUrl} and cannot be published to",
+                    )
+                    null
+                } else {
+                    repo
+                }
+            }
             is RepoAccess.Denied -> {
                 when (result.reason) {
                     RepoAccess.Reason.NOT_FOUND ->
@@ -276,6 +333,9 @@ private fun JsonObject.withAbsoluteTarball(tarballBase: String): JsonObject {
     if (file.startsWith("http://") || file.startsWith("https://")) return this
     return JsonObject(this + ("dist" to JsonObject(dist + ("tarball" to JsonPrimitive("$tarballBase/$file")))))
 }
+
+private suspend fun ApplicationCall.upstreamUnavailable() =
+    npmError(HttpStatusCode.BadGateway, "Upstream registry is unavailable")
 
 private suspend fun ApplicationCall.npmError(status: HttpStatusCode, message: String) {
     respondJson(

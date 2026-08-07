@@ -30,27 +30,30 @@ export function Repository({ repo, parts }: { repo: string; parts: string[] }) {
   if (error) return <Card className="p-4 text-sm text-rose-400">{error}</Card>;
   if (!info) return null;
 
-  if (info.type === "DOCKER") {
-    return (
-      <DockerBrowser
-        repo={repo}
-        image={parts[0]}
-        tag={parts[1]}
-        canWrite={info.permission === "WRITE"}
-      />
+  const canWrite = info.permission === "WRITE";
+  const browser =
+    info.type === "DOCKER" ? (
+      <DockerBrowser repo={repo} image={parts[0]} tag={parts[1]} canWrite={canWrite} />
+    ) : info.type === "NPM" ? (
+      <NpmBrowser repo={repo} pkg={parts[0]} version={parts[1]} canWrite={canWrite} />
+    ) : (
+      <MavenBrowser repo={repo} path={parts.join("/")} />
     );
-  }
 
-  if (info.type === "NPM") {
-    return (
-      <NpmBrowser
-        repo={repo}
-        pkg={parts[0]}
-        version={parts[1]}
-        canWrite={info.permission === "WRITE"}
-      />
-    );
-  }
+  return (
+    <div>
+      {info.mode === "PROXY" && <MirrorNotice remoteUrl={info.remoteUrl} />}
+      {browser}
+    </div>
+  );
+}
 
-  return <MavenBrowser repo={repo} path={parts.join("/")} />;
+/** A mirror only shows what has been pulled through it, which is worth saying before the listing looks empty. */
+function MirrorNotice({ remoteUrl }: { remoteUrl: string | null }) {
+  return (
+    <Card className="mb-4 p-3 text-xs text-neutral-400">
+      Mirror of <span className="text-neutral-200">{remoteUrl}</span>. Listed below is what has been requested
+      through it so far — anything else is fetched from the upstream on first use.
+    </Card>
+  );
 }

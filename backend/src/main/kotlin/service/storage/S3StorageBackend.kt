@@ -78,15 +78,22 @@ class S3StorageBackend(config: StorageConfig.S3) : StorageBackend {
         }
     }
 
-    override suspend fun exists(repository: String, path: String): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun stat(repository: String, path: String): StorageEntry? = withContext(Dispatchers.IO) {
         val request = HeadObjectRequest.builder().bucket(bucket).key(objectKey(repository, path)).build()
         try {
-            client.headObject(request)
-            true
+            val response = client.headObject(request)
+            StorageEntry(
+                name = path.substringAfterLast('/'),
+                directory = false,
+                size = response.contentLength(),
+                lastModified = response.lastModified(),
+            )
         } catch (e: S3Exception) {
-            if (e.statusCode() == 404) false else throw e
+            if (e.statusCode() == 404) null else throw e
         }
     }
+
+    override suspend fun exists(repository: String, path: String): Boolean = stat(repository, path) != null
 
     override suspend fun write(repository: String, path: String, input: InputStream): Boolean =
         withContext(Dispatchers.IO) {
