@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ChevronDown, ChevronRight, Cloud } from "lucide-react";
 import { api, ApiError, type UserRepository } from "../api";
 import { Card } from "../ui";
 import { DockerBrowser } from "./DockerBrowser";
@@ -48,12 +49,47 @@ export function Repository({ repo, parts }: { repo: string; parts: string[] }) {
   );
 }
 
-/** A mirror only shows what has been pulled through it, which is worth saying before the listing looks empty. */
+/**
+ * A mirror only lists what has been pulled through it, which is worth saying before the listing looks empty —
+ * but it is context, not the page, so it stays a single line until someone asks for the upstreams.
+ */
 function MirrorNotice({ remoteUrls }: { remoteUrls: string[] }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Card className="mb-4 p-3 text-xs text-neutral-400">
-      Mirror of <span className="text-neutral-200">{remoteUrls.join(", ")}</span>. Listed below is what has been
-      requested through it so far — anything else is fetched from the upstreams on first use.
+    <Card className="mb-4">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-neutral-400 transition-colors hover:text-neutral-200"
+      >
+        {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        <Cloud size={14} className="text-amber-400" />
+        <span>
+          Mirror of{" "}
+          <span className="text-neutral-200">
+            {remoteUrls.length} {remoteUrls.length === 1 ? "upstream" : "upstreams"}
+          </span>
+        </span>
+      </button>
+
+      {open && (
+        <div className="border-t border-neutral-800 px-3 py-2.5">
+          <ol className="space-y-1">
+            {remoteUrls.map((url, index) => (
+              <li key={url} className="flex gap-2 text-xs">
+                <span className="w-4 shrink-0 text-right text-neutral-600">{index + 1}</span>
+                <code className="truncate text-neutral-300">{url}</code>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-2.5 text-xs text-neutral-500">
+            Listed below is what has been requested through this repository so far. Anything else is fetched on
+            first use, from the first upstream that has it.
+          </p>
+        </div>
+      )}
     </Card>
   );
 }
