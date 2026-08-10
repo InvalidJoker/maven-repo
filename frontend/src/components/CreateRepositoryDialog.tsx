@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { api, type RepositoryMode, type RepositoryType } from '../api'
-import { parseUpstreams } from '../upstreams'
+import { repositoryNameError } from '../repository'
 import { Button, ErrorText, Input } from '../ui'
 import { Modal } from './Modal'
 import { UpstreamList } from './UpstreamList'
@@ -16,24 +16,18 @@ const MODES: { id: RepositoryMode; label: string; hint: string }[] = [
   { id: 'PROXY', label: 'Mirror', hint: 'Read-only. Serves upstream registries and caches what it hands out.' },
 ]
 
-const NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/
-
 export function CreateRepositoryDialog({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [name, setName] = useState('')
   const [type, setType] = useState<RepositoryType>('MAVEN')
   const [mode, setMode] = useState<RepositoryMode>('HOSTED')
   const [isPrivate, setPrivate] = useState(false)
-  const [remotes, setRemotes] = useState('')
+  const [upstreams, setUpstreams] = useState<string[]>([])
   const [ttl, setTtl] = useState('600')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  // Docker repository names become the first segment of an image reference, which the OCI spec keeps lowercase.
-  const invalidName = name.trim().length > 0 && !NAME_PATTERN.test(name.trim())
-  const lowercaseOnly = type === 'DOCKER' && name.trim() !== name.trim().toLowerCase()
-  const upstreams = parseUpstreams(remotes)
-  const ready =
-    name.trim().length > 0 && !invalidName && !lowercaseOnly && (mode === 'HOSTED' || upstreams.length > 0)
+  const nameError = repositoryNameError(name, type)
+  const ready = name.trim().length > 0 && !nameError && (mode === 'HOSTED' || upstreams.length > 0)
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -84,8 +78,7 @@ export function CreateRepositoryDialog({ onClose, onCreated }: { onClose: () => 
             onChange={(e) => setName(e.target.value)}
             className="max-w-xs"
           />
-          {invalidName && <Hint tone="error">Letters, digits, dots, dashes and underscores only.</Hint>}
-          {!invalidName && lowercaseOnly && <Hint tone="error">Docker repository names must be lowercase.</Hint>}
+          {nameError && <Hint tone="error">{nameError}</Hint>}
         </Field>
 
         <Field label="Format">
@@ -119,7 +112,7 @@ export function CreateRepositoryDialog({ onClose, onCreated }: { onClose: () => 
         {mode === 'PROXY' && (
           <>
             <Field label="Upstreams">
-              <UpstreamList type={type} value={remotes} onChange={setRemotes} />
+              <UpstreamList type={type} value={upstreams} onChange={setUpstreams} />
             </Field>
 
             <Field label="Cache">

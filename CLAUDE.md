@@ -38,6 +38,8 @@ One trap: `GET /api/repositories` is registered twice, and the browse route wins
 ### Storage abstraction
 Artifacts are stored behind the `StorageBackend` interface (`service/storage/StorageBackend.kt`): `LocalStorageBackend` (filesystem) and `S3StorageBackend` (AWS SDK v2, supports a custom `endpoint` for S3-compatible stores). The active one is selected from `StorageConfig` in `AppModule`. All paths are repository-relative; do not reintroduce `java.io.File` into callers — go through the interface. The one deliberate exception is `BlobUploadSessions`, which buffers in-flight Docker layer uploads on local disk because the interface has no append operation; only finished blobs reach the backend.
 
+Everything is keyed by the repository *name*, so renaming one (`PUT /api/repositories/{repo}` with a new `name`) has to move its content: `renameRepository` does that per backend — a directory rename locally, copy-then-delete on S3 — and the row is only updated once the move succeeded.
+
 ### Repository types
 Every repository is `MAVEN`, `DOCKER` or `NPM` (`RepositoryType` on `RepositoryTable`). The type decides which protocol serves it; routes pass the expected type to `RepositoryAccess.check`, so a Maven URL on a Docker repository (or an npm URL on either) is a 404. Everything else — users, grants, token scopes — is shared across all three.
 

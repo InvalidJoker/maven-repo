@@ -1,11 +1,10 @@
 import type { RepositoryType } from './api'
 
-/** Upstreams are edited as text, one per line, in the order a mirror consults them. */
-export function parseUpstreams(text: string): string[] {
-  return text
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
+/** Trims what people paste (trailing slashes, whitespace); null when it is not an http(s) URL. */
+export function normalizeUpstream(value: string): string | null {
+  const trimmed = value.trim().replace(/\/+$/, '')
+  if (!/^https?:\/\/[^\s/]+(\/\S*)?$/i.test(trimmed)) return null
+  return trimmed
 }
 
 /** Registries people usually mirror, offered as one-click presets when creating a mirror repository. */

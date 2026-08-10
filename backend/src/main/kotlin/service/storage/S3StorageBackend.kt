@@ -10,6 +10,7 @@ import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.S3Configuration
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest
 import software.amazon.awssdk.services.s3.model.Delete
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest
@@ -139,6 +140,28 @@ class S3StorageBackend(config: StorageConfig.S3) : StorageBackend {
             deleted = true
         }
         deleted
+    }
+
+    /** S3 has no rename, so every object is copied to the new prefix before the old one is dropped. */
+    override suspend fun renameRepository(from: String, to: String): Boolean = withContext(Dispatchers.IO) {
+        val prefix = "$from/"
+        val pages = client.listObjectsV2Paginator(
+            ListObjectsV2Request.builder().bucket(bucket).prefix(prefix).build(),
+        )
+        for (page in pages) {
+            for (obj in page.contents()) {
+                client.copyObject(
+                    CopyObjectRequest.builder()
+                        .sourceBucket(bucket)
+                        .sourceKey(obj.key())
+                        .destinationBucket(bucket)
+                        .destinationKey("$to/" + obj.key().removePrefix(prefix))
+                        .build(),
+                )
+            }
+        }
+        deleteDirectory(from, "")
+        true
     }
 
     private fun cleanSegments(path: String): List<String> =

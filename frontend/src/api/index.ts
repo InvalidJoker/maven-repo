@@ -186,6 +186,7 @@ export const api = {
   updateRepository: (
     repo: string,
     changes: {
+      name?: string;
       private?: boolean;
       remoteUrls?: string[];
       cacheTtlSeconds?: number;

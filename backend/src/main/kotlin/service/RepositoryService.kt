@@ -50,6 +50,7 @@ class RepositoryService(private val db: DatabaseService) {
     suspend fun update(repoId: Int, request: UpdateRepositoryRequest) {
         db.query {
             RepositoryTable.update({ RepositoryTable.id eq repoId }) {
+                request.name?.let { value -> it[name] = value }
                 request.private?.let { value -> it[private] = value }
                 request.remoteUrls?.let { value -> it[remoteUrls] = value.joinToString("\n") }
                 request.cacheTtlSeconds?.let { value -> it[cacheTtlSeconds] = value }

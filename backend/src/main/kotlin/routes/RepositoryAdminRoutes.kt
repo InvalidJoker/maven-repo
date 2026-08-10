@@ -30,9 +30,7 @@ fun Route.repositoryAdminRoutes(repositories: RepositoryService, users: UserServ
             post {
                 val request = call.receive<CreateRepositoryRequest>()
                 val name = request.name.trim()
-                // Docker repository names become the first segment of an image reference, which the OCI spec
-                // restricts to lowercase.
-                if (!REPOSITORY_NAME.matches(name) || (request.type == RepositoryType.DOCKER && name != name.lowercase())) {
+                if (!validName(name, request.type)) {
                     call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid repository name"))
                     return@post
                 }
@@ -65,6 +63,16 @@ fun Route.repositoryAdminRoutes(repositories: RepositoryService, users: UserServ
                     ?: return@put call.respond(HttpStatusCode.NotFound, mapOf("error" to "Repository not found"))
                 val request = call.receive<UpdateRepositoryRequest>()
 
+                val rename = request.name?.trim()?.takeIf { it != repo.name }
+                if (rename != null) {
+                    if (!validName(rename, repo.type)) {
+                        return@put call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid repository name"))
+                    }
+                    if (repositories.findByName(rename) != null) {
+                        return@put call.respond(HttpStatusCode.Conflict, mapOf("error" to "Repository already exists"))
+                    }
+                }
+
                 val remotes = request.remoteUrls?.let { urls ->
                     if (repo.mode != RepositoryMode.PROXY) {
                         return@put call.respond(
@@ -81,8 +89,17 @@ fun Route.repositoryAdminRoutes(repositories: RepositoryService, users: UserServ
                     return@put call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid cache lifetime"))
                 }
 
-                repositories.update(repo.id, request.copy(remoteUrls = remotes))
-                call.respond(repositories.findByName(repo.name)!!)
+                // Artifacts live under the repository name, so they have to move before the row does — a failed
+                // move leaves the repository exactly as it was.
+                if (rename != null && !storage.renameRepository(repo.name, rename)) {
+                    return@put call.respond(
+                        HttpStatusCode.InternalServerError,
+                        mapOf("error" to "Failed to move the stored artifacts"),
+                    )
+                }
+
+                repositories.update(repo.id, request.copy(name = rename, remoteUrls = remotes))
+                call.respond(repositories.findByName(rename ?: repo.name)!!)
             }
 
             /** Drops everything a proxy repository has mirrored so far; it refills on the next request. */
@@ -128,6 +145,13 @@ fun Route.repositoryAdminRoutes(repositories: RepositoryService, users: UserServ
         }
     }
 }
+
+/**
+ * Docker repository names become the first segment of an image reference, which the OCI spec restricts to
+ * lowercase.
+ */
+private fun validName(name: String, type: RepositoryType): Boolean =
+    REPOSITORY_NAME.matches(name) && (type != RepositoryType.DOCKER || name == name.lowercase())
 
 /** Null when the list is empty or any entry is not a usable upstream. */
 private fun remoteUrls(values: List<String>, type: RepositoryType): List<String>? {

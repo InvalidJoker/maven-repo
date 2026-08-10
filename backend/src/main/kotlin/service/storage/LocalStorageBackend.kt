@@ -90,4 +90,13 @@ class LocalStorageBackend(rootPath: String) : StorageBackend {
         val dir = fileFor(repository, path)?.takeIf { it.isDirectory } ?: return@withContext false
         dir.deleteRecursively()
     }
+
+    override suspend fun renameRepository(from: String, to: String): Boolean = withContext(Dispatchers.IO) {
+        val source = fileFor(from, "") ?: return@withContext false
+        val target = fileFor(to, "") ?: return@withContext false
+        if (!source.isDirectory) return@withContext true
+        if (target.exists()) return@withContext false
+        target.parentFile?.mkdirs()
+        source.renameTo(target)
+    }
 }

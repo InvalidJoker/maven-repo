@@ -37,6 +37,7 @@ data class CreateRepositoryRequest(
 
 @Serializable
 data class UpdateRepositoryRequest(
+    val name: String? = null,
     val private: Boolean? = null,
     val remoteUrls: List<String>? = null,
     val cacheTtlSeconds: Long? = null,

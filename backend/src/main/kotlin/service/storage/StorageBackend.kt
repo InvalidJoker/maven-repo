@@ -31,4 +31,10 @@ interface StorageBackend {
 
     /** Removes a directory and everything below it. Returns false when the directory does not exist. */
     suspend fun deleteDirectory(repository: String, path: String): Boolean
+
+    /**
+     * Moves everything stored for a repository, so a rename keeps its artifacts. A repository that has nothing
+     * stored yet is a no-op; false means the move failed and the old location still holds the content.
+     */
+    suspend fun renameRepository(from: String, to: String): Boolean
 }
