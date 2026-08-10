@@ -3,9 +3,9 @@ package de.joker.routes
 import de.joker.auth.RepositoryAccess
 import de.joker.auth.UserSession
 import de.joker.model.RepositoryType
-import de.joker.model.UserRepositoryDto
 import de.joker.service.MavenBrowserService
 import de.joker.service.RepositoryService
+import de.joker.service.forUser
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -32,7 +32,7 @@ fun Route.repositoryBrowseRoutes(
             val repo = call.repositoryOrNotFound(access) ?: return@get
             val permission = access.effective(call, repo)
                 ?: return@get call.respond(HttpStatusCode.NotFound, mapOf("error" to "Repository not found"))
-            call.respond(UserRepositoryDto(repo.name, repo.private, permission, repo.type))
+            call.respond(repo.forUser(permission))
         }
 
         get("/{repo}/tree/{path...}") {

@@ -5,10 +5,11 @@ import de.joker.database.DatabaseService
 import de.joker.database.RepositoryPermissionTable
 import de.joker.database.RepositoryTable
 import de.joker.database.UserTable
+import de.joker.model.CreateRepositoryRequest
 import de.joker.model.RepositoryDto
 import de.joker.model.RepositoryPermissionDto
-import de.joker.model.RepositoryType
 import de.joker.model.ScopeDto
+import de.joker.model.UpdateRepositoryRequest
 import de.joker.model.UserRepositoryDto
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.singleOrNull
@@ -19,19 +20,41 @@ import org.jetbrains.exposed.v1.core.innerJoin
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.selectAll
+import org.jetbrains.exposed.v1.r2dbc.update
 import org.jetbrains.exposed.v1.r2dbc.upsert
 
 data class ResolvedScope(val repoId: Int, val repoName: String, val permission: Permission)
 
 class RepositoryService(private val db: DatabaseService) {
 
-    suspend fun create(name: String, private: Boolean, type: RepositoryType): RepositoryDto = db.query {
+    suspend fun create(request: CreateRepositoryRequest): RepositoryDto = db.query {
         val row = RepositoryTable.insert {
-            it[RepositoryTable.name] = name
-            it[RepositoryTable.private] = private
-            it[RepositoryTable.type] = type
+            it[name] = request.name
+            it[private] = request.private
+            it[type] = request.type
+            it[mode] = request.mode
+            it[remoteUrls] = request.remoteUrls.joinToString("\n").takeIf { urls -> urls.isNotEmpty() }
+            it[cacheTtlSeconds] = request.cacheTtlSeconds
         }
-        RepositoryDto(row[RepositoryTable.id].value, name, private, type)
+        RepositoryDto(
+            id = row[RepositoryTable.id].value,
+            name = request.name,
+            private = request.private,
+            type = request.type,
+            mode = request.mode,
+            remoteUrls = request.remoteUrls,
+            cacheTtlSeconds = request.cacheTtlSeconds,
+        )
+    }
+
+    suspend fun update(repoId: Int, request: UpdateRepositoryRequest) {
+        db.query {
+            RepositoryTable.update({ RepositoryTable.id eq repoId }) {
+                request.private?.let { value -> it[private] = value }
+                request.remoteUrls?.let { value -> it[remoteUrls] = value.joinToString("\n") }
+                request.cacheTtlSeconds?.let { value -> it[cacheTtlSeconds] = value }
+            }
+        }
     }
 
     suspend fun list(): List<RepositoryDto> = db.query {
@@ -85,7 +108,7 @@ class RepositoryService(private val db: DatabaseService) {
     suspend fun listPublic(): List<UserRepositoryDto> = db.query {
         RepositoryTable.selectAll()
             .where { RepositoryTable.private eq false }
-            .map { UserRepositoryDto(it[RepositoryTable.name], false, Permission.READ, it[RepositoryTable.type]) }
+            .map { it.toRepositoryDto().forUser(Permission.READ) }
             .toList()
     }
 
@@ -93,7 +116,7 @@ class RepositoryService(private val db: DatabaseService) {
         val repos = RepositoryTable.selectAll().map { it.toRepositoryDto() }.toList()
 
         if (admin) {
-            repos.map { UserRepositoryDto(it.name, it.private, Permission.WRITE, it.type) }
+            repos.map { it.forUser(Permission.WRITE) }
         } else {
             val grants = RepositoryPermissionTable.selectAll()
                 .where { RepositoryPermissionTable.user eq userId }
@@ -103,7 +126,7 @@ class RepositoryService(private val db: DatabaseService) {
 
             repos.mapNotNull { repo ->
                 val permission = grants[repo.id] ?: Permission.READ.takeUnless { repo.private }
-                permission?.let { UserRepositoryDto(repo.name, repo.private, it, repo.type) }
+                permission?.let { repo.forUser(it) }
             }
         }
     }
@@ -122,5 +145,11 @@ class RepositoryService(private val db: DatabaseService) {
         name = this[RepositoryTable.name],
         private = this[RepositoryTable.private],
         type = this[RepositoryTable.type],
+        mode = this[RepositoryTable.mode],
+        remoteUrls = this[RepositoryTable.remoteUrls]?.lines()?.filter { it.isNotBlank() }.orEmpty(),
+        cacheTtlSeconds = this[RepositoryTable.cacheTtlSeconds],
     )
 }
+
+fun RepositoryDto.forUser(permission: Permission) =
+    UserRepositoryDto(name, private, permission, type, mode, remoteUrls, cacheTtlSeconds)

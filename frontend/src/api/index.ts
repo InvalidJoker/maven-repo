@@ -1,6 +1,7 @@
 import type {
   Permission,
   Repository,
+  RepositoryMode,
   RepositoryType,
   User,
   UserRepository,
@@ -28,6 +29,7 @@ export type {
   Permission,
   BrowseEntry,
   Repository,
+  RepositoryMode,
   RepositoryType,
   User,
   UserRepository,
@@ -173,12 +175,32 @@ export const api = {
 
   // repositories (admin)
   repositories: () => request<Repository[]>("GET", "/api/repositories"),
-  createRepository: (name: string, isPrivate: boolean, type: RepositoryType) =>
-    request<Repository>("POST", "/api/repositories", {
-      name,
-      private: isPrivate,
-      type,
-    }),
+  createRepository: (repository: {
+    name: string;
+    private: boolean;
+    type: RepositoryType;
+    mode: RepositoryMode;
+    remoteUrls?: string[];
+    cacheTtlSeconds?: number;
+  }) => request<Repository>("POST", "/api/repositories", repository),
+  updateRepository: (
+    repo: string,
+    changes: {
+      private?: boolean;
+      remoteUrls?: string[];
+      cacheTtlSeconds?: number;
+    },
+  ) =>
+    request<Repository>(
+      "PUT",
+      `/api/repositories/${encodeURIComponent(repo)}`,
+      changes,
+    ),
+  clearRepositoryCache: (repo: string) =>
+    request<void>(
+      "DELETE",
+      `/api/repositories/${encodeURIComponent(repo)}/cache`,
+    ),
   permissions: (repo: string) =>
     request<RepositoryPermission[]>(
       "GET",

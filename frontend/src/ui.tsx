@@ -1,5 +1,10 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
-import type { Permission, RepositoryType } from './api'
+import type {
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+  TextareaHTMLAttributes,
+} from 'react'
+import type { Permission, RepositoryMode, RepositoryType } from './api'
 
 type Variant = 'primary' | 'ghost' | 'danger'
 
@@ -27,6 +32,15 @@ export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInpu
     <input
       {...props}
       className={`w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/40 focus:outline-none ${className}`}
+    />
+  )
+}
+
+export function Textarea({ className = '', ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea
+      {...props}
+      className={`w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-1.5 font-mono text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/40 focus:outline-none ${className}`}
     />
   )
 }
@@ -68,6 +82,11 @@ export function VisibilityBadge({ isPrivate }: { isPrivate: boolean }) {
 export function TypeBadge({ type }: { type: RepositoryType }) {
   const tones: Record<RepositoryType, Tone> = { MAVEN: 'neutral', DOCKER: 'sky', NPM: 'rose' }
   return <Badge tone={tones[type]}>{type.toLowerCase()}</Badge>
+}
+
+export function ModeBadge({ mode }: { mode: RepositoryMode }) {
+  if (mode !== 'PROXY') return null
+  return <Badge tone="amber">mirror</Badge>
 }
 
 export function Table({ head, children }: { head: ReactNode; children: ReactNode }) {

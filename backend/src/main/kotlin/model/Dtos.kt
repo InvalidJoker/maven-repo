@@ -7,14 +7,39 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class RepositoryType { MAVEN, DOCKER, NPM }
 
+/** A repository either holds what was published to it, or mirrors an upstream registry on demand. */
 @Serializable
-data class RepositoryDto(val id: Int, val name: String, val private: Boolean, val type: RepositoryType)
+enum class RepositoryMode { HOSTED, PROXY }
+
+const val DEFAULT_CACHE_TTL_SECONDS = 600L
+
+@Serializable
+data class RepositoryDto(
+    val id: Int,
+    val name: String,
+    val private: Boolean,
+    val type: RepositoryType,
+    val mode: RepositoryMode = RepositoryMode.HOSTED,
+    /** Upstreams of a proxy repository, consulted in order until one has what was asked for. */
+    val remoteUrls: List<String> = emptyList(),
+    val cacheTtlSeconds: Long = DEFAULT_CACHE_TTL_SECONDS,
+)
 
 @Serializable
 data class CreateRepositoryRequest(
     val name: String,
     val private: Boolean = false,
     val type: RepositoryType = RepositoryType.MAVEN,
+    val mode: RepositoryMode = RepositoryMode.HOSTED,
+    val remoteUrls: List<String> = emptyList(),
+    val cacheTtlSeconds: Long = DEFAULT_CACHE_TTL_SECONDS,
+)
+
+@Serializable
+data class UpdateRepositoryRequest(
+    val private: Boolean? = null,
+    val remoteUrls: List<String>? = null,
+    val cacheTtlSeconds: Long? = null,
 )
 
 @Serializable
@@ -35,6 +60,9 @@ data class UserRepositoryDto(
     val private: Boolean,
     val permission: Permission,
     val type: RepositoryType,
+    val mode: RepositoryMode = RepositoryMode.HOSTED,
+    val remoteUrls: List<String> = emptyList(),
+    val cacheTtlSeconds: Long = DEFAULT_CACHE_TTL_SECONDS,
 )
 
 @Serializable

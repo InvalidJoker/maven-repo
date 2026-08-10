@@ -23,6 +23,9 @@ import de.joker.service.docker.DockerBrowserService
 import de.joker.service.docker.DockerRegistryService
 import de.joker.service.npm.NpmBrowserService
 import de.joker.service.npm.NpmRegistryService
+import de.joker.service.proxy.DockerProxyService
+import de.joker.service.proxy.MavenProxyService
+import de.joker.service.proxy.NpmProxyService
 import de.joker.service.storage.StorageBackend
 import de.joker.service.UserService
 import io.ktor.http.*
@@ -45,6 +48,9 @@ fun Application.configureRouting() {
     val blobUploads by inject<BlobUploadSessions>()
     val instanceSettings by inject<InstanceSettingsService>()
     val oidcService by inject<OidcService>()
+    val mavenProxy by inject<MavenProxyService>()
+    val dockerProxy by inject<DockerProxyService>()
+    val npmProxy by inject<NpmProxyService>()
 
     routing {
         get("/health") {
@@ -52,9 +58,9 @@ fun Application.configureRouting() {
         }
 
         authRoutes(userService)
-        mavenRoutes(repositoryAccess, storageService)
-        dockerRegistryRoutes(repositoryAccess, dockerRegistry, blobUploads, dockerBrowser)
-        npmRegistryRoutes(repositoryAccess, npmRegistry, userService)
+        mavenRoutes(repositoryAccess, storageService, mavenProxy)
+        dockerRegistryRoutes(repositoryAccess, dockerRegistry, blobUploads, dockerBrowser, dockerProxy)
+        npmRegistryRoutes(repositoryAccess, npmRegistry, userService, npmProxy)
 
         if (oidcService.enabled) {
             oidcRoutes(oidcService, userService)
@@ -65,7 +71,7 @@ fun Application.configureRouting() {
             repositoryBrowseRoutes(repositoryService, mavenBrowser, repositoryAccess)
             dockerBrowseRoutes(repositoryAccess, dockerBrowser, dockerRegistry)
             npmBrowseRoutes(repositoryAccess, npmBrowser, npmRegistry)
-            repositoryAdminRoutes(repositoryService, userService)
+            repositoryAdminRoutes(repositoryService, userService, storageService)
             userAdminRoutes(userService)
             tokenRoutes(accessTokenService, repositoryService)
         }

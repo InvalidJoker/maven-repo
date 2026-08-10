@@ -5,12 +5,16 @@ import de.joker.auth.Permission
 import de.joker.auth.RepoAccess
 import de.joker.auth.RepositoryAccess
 import de.joker.model.RepositoryDto
+import de.joker.model.RepositoryMode
 import de.joker.model.RepositoryType
 import de.joker.service.docker.BlobUploadSessions
 import de.joker.service.docker.Digest
 import de.joker.service.docker.DockerBrowserService
 import de.joker.service.docker.DockerRegistryService
 import de.joker.service.docker.ImageName
+import de.joker.service.proxy.DockerProxyService
+import de.joker.service.proxy.ProxyManifest
+import de.joker.service.proxy.ProxyOutcome
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.origin
@@ -34,8 +38,9 @@ fun Route.dockerRegistryRoutes(
     registry: DockerRegistryService,
     uploads: BlobUploadSessions,
     browser: DockerBrowserService,
+    proxy: DockerProxyService,
 ) {
-    val api = DockerRegistryApi(access, registry, uploads, browser)
+    val api = DockerRegistryApi(access, registry, uploads, browser, proxy)
 
     route("/v2") {
         get { api.ping(call) }
@@ -92,6 +97,7 @@ private class DockerRegistryApi(
     private val registry: DockerRegistryService,
     private val uploads: BlobUploadSessions,
     private val browser: DockerBrowserService,
+    private val proxy: DockerProxyService,
 ) {
 
     suspend fun ping(call: ApplicationCall) {
@@ -181,16 +187,32 @@ private class DockerRegistryApi(
 
     private suspend fun tagList(call: ApplicationCall, target: Target.Tags) {
         val repo = authorize(call, target.name, Permission.READ) ?: return
-        val tags = registry.listTags(repo.name, target.name.image)
+        val tags = if (repo.mode == RepositoryMode.PROXY) {
+            proxy.tags(repo, target.name.image)
+        } else {
+            registry.listTags(repo.name, target.name.image)
+        }
         val limit = call.request.queryParameters["n"]?.toIntOrNull()
         call.respondOci(TagListResponse(target.name.toString(), if (limit != null) tags.take(limit) else tags))
     }
 
     private suspend fun getManifest(call: ApplicationCall, target: Target.Manifest, body: Boolean) {
         val repo = authorize(call, target.name, Permission.READ) ?: return
-        val digest = registry.resolveReference(repo.name, target.name.image, target.reference)
-        val manifest = digest?.let { registry.readManifest(repo.name, target.name.image, it) }
-            ?: return call.ociError(HttpStatusCode.NotFound, "MANIFEST_UNKNOWN", "Manifest unknown")
+
+        val manifest = if (repo.mode == RepositoryMode.PROXY) {
+            when (val result = proxy.manifest(repo, target.name.image, target.reference)) {
+                is ProxyManifest.Found -> result.manifest
+                ProxyManifest.NotFound ->
+                    return call.ociError(HttpStatusCode.NotFound, "MANIFEST_UNKNOWN", "Manifest unknown")
+
+                ProxyManifest.Error ->
+                    return call.ociError(HttpStatusCode.BadGateway, "UNAVAILABLE", "Upstream registry is unavailable")
+            }
+        } else {
+            val digest = registry.resolveReference(repo.name, target.name.image, target.reference)
+            digest?.let { registry.readManifest(repo.name, target.name.image, it) }
+                ?: return call.ociError(HttpStatusCode.NotFound, "MANIFEST_UNKNOWN", "Manifest unknown")
+        }
 
         call.response.header(DOCKER_CONTENT_DIGEST, manifest.digest.toString())
         val contentType = ContentType.parse(manifest.mediaType)
@@ -248,7 +270,10 @@ private class DockerRegistryApi(
             ?: return call.ociError(HttpStatusCode.BadRequest, "DIGEST_INVALID", "Invalid digest")
 
         val blob = registry.readBlob(repo.name, digest)
-            ?: return call.ociError(HttpStatusCode.NotFound, "BLOB_UNKNOWN", "Blob unknown")
+        if (blob == null) {
+            if (repo.mode == RepositoryMode.PROXY) return proxyBlob(call, repo, target.name.image, digest, body)
+            return call.ociError(HttpStatusCode.NotFound, "BLOB_UNKNOWN", "Blob unknown")
+        }
 
         call.response.header(DOCKER_CONTENT_DIGEST, digest.toString())
         if (body) {
@@ -256,6 +281,34 @@ private class DockerRegistryApi(
         } else {
             blob.close()
             call.respondHeadersOnly(ContentType.Application.OctetStream, blob.size)
+        }
+    }
+
+    /** A layer that has not been mirrored yet: `HEAD` only asks the upstream about it, `GET` pulls and caches it. */
+    private suspend fun proxyBlob(
+        call: ApplicationCall,
+        repo: RepositoryDto,
+        image: String,
+        digest: Digest,
+        body: Boolean,
+    ) {
+        val outcome = if (body) {
+            proxy.blob(call, repo, image, digest)
+        } else {
+            val head = proxy.blobHead(repo, image, digest)
+            if (head.outcome == ProxyOutcome.SERVED) {
+                call.response.header(DOCKER_CONTENT_DIGEST, digest.toString())
+                call.respondHeadersOnly(ContentType.Application.OctetStream, head.size)
+            }
+            head.outcome
+        }
+
+        when (outcome) {
+            // SERVED and ABORTED have both already written to the response.
+            ProxyOutcome.SERVED, ProxyOutcome.ABORTED -> Unit
+            ProxyOutcome.NOT_FOUND -> call.ociError(HttpStatusCode.NotFound, "BLOB_UNKNOWN", "Blob unknown")
+            ProxyOutcome.UPSTREAM_ERROR ->
+                call.ociError(HttpStatusCode.BadGateway, "UNAVAILABLE", "Upstream registry is unavailable")
         }
     }
 
@@ -379,7 +432,19 @@ private class DockerRegistryApi(
         name: ImageName,
         required: Permission,
     ): RepositoryDto? = when (val result = access.check(call, name.repository, required, RepositoryType.DOCKER)) {
-        is RepoAccess.Granted -> result.repository
+        is RepoAccess.Granted -> {
+            val repo = result.repository
+            if (required == Permission.WRITE && repo.mode == RepositoryMode.PROXY) {
+                call.ociError(
+                    HttpStatusCode.MethodNotAllowed,
+                    "DENIED",
+                    "${repo.name} mirrors ${repo.remoteUrls.joinToString(", ")} and cannot be pushed to",
+                )
+                null
+            } else {
+                repo
+            }
+        }
 
         is RepoAccess.Denied -> {
             when (result.reason) {

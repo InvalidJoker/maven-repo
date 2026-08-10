@@ -2,6 +2,9 @@ export type Permission = "READ" | "WRITE";
 
 export type RepositoryType = "MAVEN" | "DOCKER" | "NPM";
 
+/** A repository either holds what was published to it, or mirrors an upstream registry on demand. */
+export type RepositoryMode = "HOSTED" | "PROXY";
+
 export interface User {
   id: number;
   username: string;
@@ -13,6 +16,10 @@ export interface Repository {
   name: string;
   private: boolean;
   type: RepositoryType;
+  mode: RepositoryMode;
+  /** Upstreams of a mirror, consulted in order until one has what was asked for. */
+  remoteUrls: string[];
+  cacheTtlSeconds: number;
 }
 
 export interface UserRepository {
@@ -20,6 +27,9 @@ export interface UserRepository {
   private: boolean;
   permission: Permission;
   type: RepositoryType;
+  mode: RepositoryMode;
+  remoteUrls: string[];
+  cacheTtlSeconds: number;
 }
 
 export interface RepositoryPermission {

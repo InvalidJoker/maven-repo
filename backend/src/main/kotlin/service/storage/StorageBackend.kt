@@ -20,6 +20,9 @@ interface StorageBackend {
 
     suspend fun read(repository: String, path: String): StorageObject?
 
+    /** Metadata of a single stored file, or null when it does not exist. */
+    suspend fun stat(repository: String, path: String): StorageEntry?
+
     suspend fun exists(repository: String, path: String): Boolean
 
     suspend fun write(repository: String, path: String, input: InputStream): Boolean

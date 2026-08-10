@@ -4,6 +4,7 @@ import { useAuth } from "../auth";
 import { navigate } from "../router";
 import {
   Card,
+  ModeBadge,
   PageHeading,
   PermissionBadge,
   TypeBadge,
@@ -58,6 +59,7 @@ export function Dashboard() {
                     {repo.name}
                   </span>
                   <TypeBadge type={repo.type} />
+                  <ModeBadge mode={repo.mode} />
                   {user ? (
                     <>
                       <VisibilityBadge isPrivate={repo.private} />
