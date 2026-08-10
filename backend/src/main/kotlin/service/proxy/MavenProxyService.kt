@@ -17,6 +17,7 @@ import java.time.Duration
 class MavenProxyService(private val cache: ProxyCache) {
 
     suspend fun serve(call: ApplicationCall, repo: RepositoryDto, path: String): ProxyOutcome {
+        if (!isArtifactPath(path)) return ProxyOutcome.NOT_FOUND
         val contentType = ContentType.defaultForFilePath(path)
 
         cache.cached(repo.name, path, ttl(repo, path))?.let {
@@ -47,6 +48,7 @@ class MavenProxyService(private val cache: ProxyCache) {
 
     /** `HEAD` is answered without pulling the artifact, which is what makes Gradle's existence checks cheap. */
     suspend fun exists(repo: RepositoryDto, path: String): ProxyOutcome {
+        if (!isArtifactPath(path)) return ProxyOutcome.NOT_FOUND
         if (cache.fresh(repo.name, path, ttl(repo, path))) return ProxyOutcome.SERVED
         if (cache.missed(repo.name, path)) return ProxyOutcome.NOT_FOUND
 
@@ -65,6 +67,16 @@ class MavenProxyService(private val cache: ProxyCache) {
             return ProxyOutcome.NOT_FOUND
         }
         return if (cache.fresh(repo.name, path, null)) ProxyOutcome.SERVED else ProxyOutcome.UPSTREAM_ERROR
+    }
+
+    /**
+     * Directories are not proxied. Every file a Maven client resolves carries an extension, while a directory
+     * path answers with an HTML index upstream — which would be cached as a *file* under that name and block
+     * everything below it from ever being stored.
+     */
+    private fun isArtifactPath(path: String): Boolean {
+        val name = path.trimEnd('/').substringAfterLast('/')
+        return name.isNotEmpty() && name.contains('.')
     }
 
     /**

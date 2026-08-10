@@ -63,9 +63,15 @@ class LocalStorageBackend(rootPath: String) : StorageBackend {
      */
     override suspend fun write(repository: String, path: String, input: InputStream): Boolean =
         withContext(Dispatchers.IO) {
+            // An empty path resolves to the repository root: writing there would replace the whole repository
+            // with a file and every later write below it would fail.
+            if (path.split('/', '\\').none { it.isNotEmpty() }) return@withContext false
+
             val file = fileFor(repository, path) ?: return@withContext false
             val parent = file.parentFile ?: return@withContext false
+            // Fails when a path component already exists as a file, which must not surface as an exception.
             parent.mkdirs()
+            if (!parent.isDirectory || file.isDirectory) return@withContext false
 
             val temp = File.createTempFile(".${file.name}", ".part", parent)
             try {

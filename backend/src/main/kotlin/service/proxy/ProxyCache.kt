@@ -192,7 +192,15 @@ class ProxyCache(private val client: HttpClient, private val storage: StorageBac
                 }
                 flush()
             }
-            withContext(Dispatchers.IO) { temp.inputStream() }.use { storage.write(repository, path, it) }
+            // The client already has the bytes, so a failure to cache them must not be reported as a failed
+            // download — but it silently leaves the repository empty, so it is logged.
+            val stored = try {
+                withContext(Dispatchers.IO) { temp.inputStream() }.use { storage.write(repository, path, it) }
+            } catch (e: Exception) {
+                logger.warn("Caching {}/{} failed: {}", repository, path, e.toString())
+                false
+            }
+            if (!stored) logger.warn("Served {}/{} from upstream but could not cache it", repository, path)
         } finally {
             withContext(Dispatchers.IO) { temp.delete() }
         }
