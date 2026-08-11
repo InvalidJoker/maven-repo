@@ -80,8 +80,7 @@ export function Dashboard() {
       <p className="mt-3 text-xs text-neutral-500">
         Public repositories can be read without credentials. Create an access
         token under <span className="text-neutral-300">Tokens</span> to publish
-        or read private repositories — the same token works for Gradle/Maven and{" "}
-        <span className="text-neutral-300">docker login</span>.
+        or read private repositories
       </p>
     </div>
   );
