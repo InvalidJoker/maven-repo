@@ -1,6 +1,7 @@
 package de.joker.service
 
 import de.joker.model.AccentColor
+import de.joker.model.FooterSettings
 import de.joker.model.InstanceSettings
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -24,6 +25,7 @@ class InstanceSettingsService(dataPath: String, private val demo: Boolean = fals
         val iconContentType: String? = null,
         val iconUrl: String? = null,
         val accent: AccentColor = AccentColor.EMERALD,
+        val footer: FooterSettings = FooterSettings(),
     )
 
     data class Icon(val bytes: ByteArray, val contentType: String)
@@ -42,7 +44,7 @@ class InstanceSettingsService(dataPath: String, private val demo: Boolean = fals
             stored.iconContentType != null && iconFile.exists() -> "/api/instance/icon?v=${iconFile.lastModified()}"
             else -> null
         }
-        return InstanceSettings(stored.name, iconUrl, stored.accent, demo)
+        return InstanceSettings(stored.name, iconUrl, stored.accent, demo, footer = stored.footer)
     }
 
     @Synchronized
@@ -50,6 +52,9 @@ class InstanceSettingsService(dataPath: String, private val demo: Boolean = fals
 
     @Synchronized
     fun setAccent(accent: AccentColor) = store(load().copy(accent = accent))
+
+    @Synchronized
+    fun setFooter(footer: FooterSettings) = store(load().copy(footer = footer))
 
     @Synchronized
     fun setIcon(bytes: ByteArray, contentType: String) {

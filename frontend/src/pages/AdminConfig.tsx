@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { api, ApiError, type AccentColor } from "../api";
+import { api, ApiError, type AccentColor, type FooterLink } from "../api";
 import { useInstance } from "../instance";
 import { ACCENT_OPTIONS, ACCENT_PALETTE } from "../accents";
 import { AdminNav } from "../components/AdminNav";
+import { FooterLinks } from "../components/FooterLinks";
+import { SOURCE_URL } from "../components/Footer";
 import { Button, Card, ErrorText, Input } from "../ui";
 
 type LogoAction =
@@ -16,11 +18,14 @@ export function AdminConfig() {
     name: savedName,
     iconUrl: savedIcon,
     accent: savedAccent,
+    footer: savedFooter,
     refresh,
   } = useInstance();
 
   const [name, setName] = useState(savedName);
   const [accent, setAccent] = useState<AccentColor>(savedAccent);
+  const [showSource, setShowSource] = useState(savedFooter.showSource);
+  const [links, setLinks] = useState<FooterLink[]>(savedFooter.links);
   const [logo, setLogo] = useState<LogoAction>({ type: "keep" });
   const [urlDraft, setUrlDraft] = useState("");
   const [error, setError] = useState("");
@@ -30,13 +35,27 @@ export function AdminConfig() {
   useEffect(() => {
     setName(savedName);
     setAccent(savedAccent);
+    setShowSource(savedFooter.showSource);
+    setLinks(savedFooter.links);
     setLogo({ type: "keep" });
     setUrlDraft("");
     if (fileRef.current) fileRef.current.value = "";
-  }, [savedName, savedAccent, savedIcon]);
+  }, [savedName, savedAccent, savedIcon, savedFooter]);
+
+  const footerDirty =
+    showSource !== savedFooter.showSource ||
+    JSON.stringify(links) !== JSON.stringify(savedFooter.links);
+
+  // A half-filled link row would only be rejected by the backend, so block saving until it's complete.
+  const footerIncomplete = links.some(
+    (link) => !link.label.trim() || !link.url.trim(),
+  );
 
   const dirty =
-    name.trim() !== savedName || accent !== savedAccent || logo.type !== "keep";
+    name.trim() !== savedName ||
+    accent !== savedAccent ||
+    logo.type !== "keep" ||
+    footerDirty;
 
   const previewIcon =
     logo.type === "upload"
@@ -71,6 +90,8 @@ export function AdminConfig() {
   const discard = () => {
     setName(savedName);
     setAccent(savedAccent);
+    setShowSource(savedFooter.showSource);
+    setLinks(savedFooter.links);
     setLogo({ type: "keep" });
     setUrlDraft("");
     if (fileRef.current) fileRef.current.value = "";
@@ -86,6 +107,15 @@ export function AdminConfig() {
       if (logo.type === "url") await api.setInstanceIconUrl(logo.url);
       else if (logo.type === "upload") await api.uploadInstanceIcon(logo.file);
       else if (logo.type === "reset") await api.resetInstanceIcon();
+      if (footerDirty)
+        await api.setInstanceFooter({
+          showSource,
+          links: links.map((link) => ({
+            ...link,
+            label: link.label.trim(),
+            url: link.url.trim(),
+          })),
+        });
       await refresh();
     } catch (err) {
       setError(
@@ -119,7 +149,15 @@ export function AdminConfig() {
           <Button variant="ghost" onClick={discard} disabled={!dirty || busy}>
             Discard
           </Button>
-          <Button onClick={save} disabled={!dirty || busy}>
+          <Button
+            onClick={save}
+            disabled={!dirty || busy || footerIncomplete}
+            title={
+              footerIncomplete
+                ? "Every footer link needs a label and a URL"
+                : undefined
+            }
+          >
             {busy ? "Saving…" : "Save changes"}
           </Button>
         </div>
@@ -194,7 +232,7 @@ export function AdminConfig() {
         </p>
       </Card>
 
-      <Card className="p-4">
+      <Card className="mb-6 p-4">
         <h2 className="mb-3 text-sm font-semibold text-neutral-200">
           Accent color
         </h2>
@@ -217,6 +255,28 @@ export function AdminConfig() {
         </div>
         <p className="mt-3 text-xs text-neutral-500">
           Used for buttons, links and highlights across the app.
+        </p>
+      </Card>
+
+      <Card className="p-4">
+        <h2 className="mb-3 text-sm font-semibold text-neutral-200">Footer</h2>
+
+        <label className="mb-4 flex w-fit items-center gap-2 text-sm text-neutral-300">
+          <input
+            type="checkbox"
+            checked={showSource}
+            onChange={(e) => setShowSource(e.target.checked)}
+          />
+          Show the link to the Artifact Forge source code
+        </label>
+
+        <FooterLinks value={links} onChange={setLinks} />
+
+        <p className="mt-3 text-xs text-neutral-500">
+          Extra links shown at the bottom of every page — documentation, a
+          status page, your own repository. Up to 10, each with an icon.
+          The source link points at{" "}
+          <span className="font-mono">{SOURCE_URL}</span>.
         </p>
       </Card>
 

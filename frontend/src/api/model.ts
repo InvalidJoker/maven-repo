@@ -168,6 +168,17 @@ export interface NpmVersionDetail {
 
 export type AccentColor = "EMERALD" | "INDIGO" | "BLUE" | "VIOLET" | "ROSE" | "AMBER";
 
+export interface FooterLink {
+  label: string;
+  url: string;
+  icon: string;
+}
+
+export interface FooterSettings {
+  showSource: boolean;
+  links: FooterLink[];
+}
+
 export interface Instance {
   name: string;
   iconUrl: string | null;
@@ -175,4 +186,5 @@ export interface Instance {
   demo: boolean;
   oidc: boolean;
   oidcLabel: string | null;
+  footer: FooterSettings;
 }

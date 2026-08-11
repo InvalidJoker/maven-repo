@@ -70,6 +70,15 @@ data class UserRepositoryDto(
 enum class AccentColor { EMERALD, INDIGO, BLUE, VIOLET, ROSE, AMBER }
 
 @Serializable
+data class FooterLink(val label: String, val url: String, val icon: String = "link")
+
+@Serializable
+data class FooterSettings(
+    val showSource: Boolean = true,
+    val links: List<FooterLink> = emptyList(),
+)
+
+@Serializable
 data class InstanceSettings(
     val name: String,
     val iconUrl: String? = null,
@@ -77,6 +86,7 @@ data class InstanceSettings(
     val demo: Boolean = false,
     val oidc: Boolean = false,
     val oidcLabel: String? = null,
+    val footer: FooterSettings = FooterSettings(),
 )
 
 @Serializable

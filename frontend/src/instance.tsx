@@ -25,6 +25,7 @@ export function InstanceProvider({ children }: { children: ReactNode }) {
     demo: false,
     oidc: false,
     oidcLabel: null,
+    footer: { showSource: true, links: [] },
   })
 
   const refresh = async () => {
