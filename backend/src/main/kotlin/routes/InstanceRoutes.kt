@@ -1,6 +1,7 @@
 package de.joker.routes
 
 import de.joker.AUTH_ADMIN
+import de.joker.model.FooterSettings
 import de.joker.model.SetAccentRequest
 import de.joker.model.SetIconUrlRequest
 import de.joker.model.UpdateInstanceRequest
@@ -14,6 +15,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 private const val MAX_ICON_BYTES = 1024 * 1024
+private const val MAX_FOOTER_LINKS = 10
+private val ICON_NAME = Regex("[a-z0-9-]{1,48}")
 
 fun Route.instanceRoutes(settings: InstanceSettingsService, oidc: OidcService) {
     route("/instance") {
@@ -80,6 +83,26 @@ fun Route.instanceRoutes(settings: InstanceSettingsService, oidc: OidcService) {
 
             put("/accent") {
                 settings.setAccent(call.receive<SetAccentRequest>().accent)
+                call.respond(settings.settings())
+            }
+
+            put("/footer") {
+                val footer = call.receive<FooterSettings>()
+                val links = footer.links.map { it.copy(label = it.label.trim(), url = it.url.trim(), icon = it.icon.trim()) }
+                val error = when {
+                    links.size > MAX_FOOTER_LINKS -> "At most $MAX_FOOTER_LINKS footer links"
+                    links.any { it.label.isEmpty() || it.label.length > 32 } -> "Link labels must be 1–32 characters"
+                    links.any { !(it.url.startsWith("http://") || it.url.startsWith("https://")) || it.url.length > 2048 } ->
+                        "Link URLs must be http(s) URLs"
+                    // Icons are lucide names; the frontend falls back to a generic one if it doesn't know it.
+                    links.any { !ICON_NAME.matches(it.icon) } -> "Invalid icon name"
+                    else -> null
+                }
+                if (error != null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to error))
+                    return@put
+                }
+                settings.setFooter(footer.copy(links = links))
                 call.respond(settings.settings())
             }
         }

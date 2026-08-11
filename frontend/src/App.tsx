@@ -3,6 +3,7 @@ import { useAuth } from "./auth";
 import { useInstance } from "./instance";
 import { navigate, segments, useHashRoute } from "./router";
 import { DemoBanner } from "./components/DemoBanner";
+import { Footer } from "./components/Footer";
 import { Layout } from "./components/Layout";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
@@ -79,6 +80,7 @@ export default function App() {
     <div className="flex min-h-full flex-col">
       {demo && <DemoBanner />}
       <div className="flex flex-1 flex-col">{content}</div>
+      <Footer />
     </div>
   );
 }

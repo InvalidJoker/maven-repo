@@ -23,6 +23,8 @@ import type {
   NpmVersionDetail,
   Instance,
   AccentColor,
+  FooterLink,
+  FooterSettings,
 } from "./model";
 
 export type {
@@ -50,6 +52,8 @@ export type {
   NpmVersionDetail,
   Instance,
   AccentColor,
+  FooterLink,
+  FooterSettings,
 };
 
 export class ApiError extends Error {
@@ -248,6 +252,8 @@ export const api = {
   resetInstanceIcon: () => request<void>("DELETE", "/api/instance/icon"),
   setInstanceAccent: (accent: AccentColor) =>
     request<Instance>("PUT", "/api/instance/accent", { accent }),
+  setInstanceFooter: (footer: FooterSettings) =>
+    request<Instance>("PUT", "/api/instance/footer", footer),
 
   // users (admin)
   users: () => request<User[]>("GET", "/api/users"),
