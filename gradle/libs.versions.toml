@@ -8,7 +8,7 @@ kotlin = "2.4.10"
 logback = "1.6.1"
 r2dbc-postgresql = "1.1.2.RELEASE"
 
-aws-sdk = "2.51.0"
+aws-sdk = "2.54.4"
 
 [libraries]
 bcrypt = { module = "at.favre.lib:bcrypt", version.ref = "bcrypt" }
